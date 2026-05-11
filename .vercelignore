@@ -1,0 +1,12 @@
+node_modules
+.next
+.vercel
+.tools
+Google Chrome.app
+corretor de rubricas
+.DS_Store
+.env
+.env.local
+.env*.local
+*.tsbuildinfo
+.git
