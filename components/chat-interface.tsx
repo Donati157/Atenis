@@ -437,6 +437,8 @@ interface ChatInterfaceProps {
   studyMode: StudyModeId | null
   activeLearning: boolean
   chatKey: number
+  threadId: string | null
+  onThreadCreated?: (id: string) => void
   userName?: string
   userEmail?: string | null
   userRole?: string | null
@@ -450,10 +452,25 @@ export function ChatInterface({
   studyMode,
   activeLearning,
   chatKey,
+  threadId,
+  onThreadCreated,
   userName,
   userEmail,
   userRole,
 }: ChatInterfaceProps) {
+  // Cada chatKey corresponde a uma "sessão" de chat. Se o pai não passou
+  // threadId, geramos um UUID na hora pra que o backend possa upsertar o
+  // thread no banco com esse mesmo id. Avisamos o pai via callback pra
+  // sidebar/URL refletirem.
+  const localThreadIdRef = useRef<string | null>(null)
+  if (localThreadIdRef.current === null) {
+    localThreadIdRef.current =
+      threadId ??
+      (typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : null)
+  }
+  const effectiveThreadId = threadId ?? localThreadIdRef.current
   // Rascunho ancorado no CONTEXTO (matéria/sub-matéria/preparação/modo),
   // não no chatKey. Assim, voltar pra Matemática depois de passar pelo
   // Português recupera o que foi digitado em Matemática. Cada combinação
@@ -475,9 +492,25 @@ export function ChatInterface({
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: { subject, subSubject, examPrep, corrector, studyMode, activeLearning },
+        body: {
+          subject,
+          subSubject,
+          examPrep,
+          corrector,
+          studyMode,
+          activeLearning,
+          threadId: effectiveThreadId,
+        },
       }),
-    [subject, subSubject, examPrep, corrector, studyMode, activeLearning],
+    [
+      subject,
+      subSubject,
+      examPrep,
+      corrector,
+      studyMode,
+      activeLearning,
+      effectiveThreadId,
+    ],
   )
 
   const { messages, setMessages, sendMessage, status } = useChat({
@@ -494,8 +527,56 @@ export function ChatInterface({
   const historyKey = `atenis.chatHistory.${chatKey}`
   const restoredRef = useRef(false)
 
+  // Carrega mensagens do servidor quando o pai passou um threadId existente
+  // (ex: usuário clicou num item da sidebar de histórico). Isso sobrescreve
+  // o localStorage do chatKey atual.
   useEffect(() => {
-    // Restaura uma vez por chatKey
+    if (!threadId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/threads/${threadId}`)
+        if (!res.ok) return
+        const json = (await res.json()) as {
+          messages: Array<{
+            id: string
+            role: "user" | "assistant" | "system"
+            parts: unknown
+          }>
+        }
+        if (cancelled || !Array.isArray(json.messages)) return
+        const restored = json.messages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          parts: Array.isArray(m.parts) ? m.parts : [],
+        })) as unknown as typeof messages
+        setMessages(restored)
+      } catch {
+        // silencioso
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId])
+
+  // Notifica o pai quando uma conversa "nova" (threadId local gerado) ganha
+  // a primeira mensagem do user — só aí faz sentido aparecer na sidebar.
+  const notifiedThreadRef = useRef(false)
+  useEffect(() => {
+    if (notifiedThreadRef.current) return
+    if (threadId) return // pai já sabe, não veio do local
+    if (!effectiveThreadId) return
+    const hasUserMsg = messages.some((m) => m.role === "user")
+    if (!hasUserMsg) return
+    notifiedThreadRef.current = true
+    onThreadCreated?.(effectiveThreadId)
+  }, [messages, threadId, effectiveThreadId, onThreadCreated])
+
+  useEffect(() => {
+    // Restaura uma vez por chatKey (só se não tem threadId remoto)
+    if (threadId) return
     restoredRef.current = false
     try {
       const raw = window.localStorage.getItem(historyKey)
@@ -510,7 +591,7 @@ export function ChatInterface({
     }
     restoredRef.current = true
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyKey])
+  }, [historyKey, threadId])
 
   useEffect(() => {
     // Só persiste depois da restauração inicial pra não sobrescrever com [].

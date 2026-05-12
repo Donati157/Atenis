@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import Image from "next/image"
@@ -40,6 +40,8 @@ import {
   Briefcase,
   BookOpen,
   Compass,
+  MessageSquare,
+  Trash2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -78,6 +80,57 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
   const [studyMode, setStudyMode] = useState<StudyModeId | null>(null)
   const [activeLearning, setActiveLearning] = useState(false)
   const [chatKey, setChatKey] = useState(0)
+  const [threadId, setThreadId] = useState<string | null>(null)
+  const [threads, setThreads] = useState<
+    Array<{ id: string; title: string; subject: string | null; exam_prep: string | null; updated_at: string }>
+  >([])
+
+  // Carrega lista de threads do usuário pra mostrar na sidebar.
+  const refreshThreads = useCallback(async () => {
+    try {
+      const res = await fetch("/api/threads")
+      if (!res.ok) return
+      const json = (await res.json()) as { threads: typeof threads }
+      setThreads(json.threads ?? [])
+    } catch {
+      // silencioso
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshThreads()
+  }, [refreshThreads])
+
+  const handleThreadCreated = useCallback(
+    (id: string) => {
+      setThreadId(id)
+      refreshThreads()
+    },
+    [refreshThreads],
+  )
+
+  const openThread = useCallback((id: string) => {
+    setThreadId(id)
+    setChatKey((k) => k + 1)
+    setSidebarOpen(false)
+  }, [])
+
+  const deleteThread = useCallback(
+    async (id: string) => {
+      if (!window.confirm("Apagar essa conversa? Não dá pra desfazer.")) return
+      try {
+        await fetch(`/api/threads/${id}`, { method: "DELETE" })
+        if (threadId === id) {
+          setThreadId(null)
+          setChatKey((k) => k + 1)
+        }
+        refreshThreads()
+      } catch {
+        // silencioso
+      }
+    },
+    [threadId, refreshThreads],
+  )
   const router = useRouter()
   const pathname = usePathname()
 
@@ -92,6 +145,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setExamPrep(null)
     setCorrector(null)
     setStudyMode(null)
+    setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
     if (pathname !== "/dashboard") router.push("/dashboard")
@@ -109,12 +163,14 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setSubSubject(null)
     setExamPrep(null)
     setCorrector(null)
+    setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
   }
 
   const selectSubSubject = (id: SubSubjectId) => {
     setSubSubject((cur) => (cur === id ? null : id))
+    setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
   }
@@ -124,6 +180,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setSubject(null)
     setSubSubject(null)
     setCorrector(null)
+    setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
   }
@@ -134,6 +191,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setSubSubject(null)
     setExamPrep(null)
     setStudyMode(null)
+    setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
   }
@@ -141,6 +199,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
   const selectStudyMode = (id: StudyModeId) => {
     setStudyMode((cur) => (cur === id ? null : id))
     setCorrector(null)
+    setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
   }
@@ -161,6 +220,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
         // ignora
       }
     }
+    setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
   }
@@ -380,6 +440,51 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
 
             <div className="mb-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1 flex items-center gap-1.5">
+                <MessageSquare className="h-3 w-3" />
+                Conversas
+              </h3>
+              <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+                {threads.length === 0 ? (
+                  <p className="text-xs text-muted-foreground/70 px-3 py-2">
+                    Suas conversas aparecem aqui.
+                  </p>
+                ) : (
+                  threads.map((t) => {
+                    const isActive = threadId === t.id
+                    return (
+                      <div
+                        key={t.id}
+                        className={cn(
+                          "group flex items-center gap-1 rounded-lg transition-colors",
+                          isActive
+                            ? "bg-accent/15 text-accent"
+                            : "hover:bg-secondary/50 text-foreground/80",
+                        )}
+                      >
+                        <button
+                          onClick={() => openThread(t.id)}
+                          className="flex-1 text-sm px-3 py-2 text-left truncate min-w-0"
+                          title={t.title}
+                        >
+                          {t.title}
+                        </button>
+                        <button
+                          onClick={() => deleteThread(t.id)}
+                          className="opacity-0 group-hover:opacity-100 px-2 py-1 text-muted-foreground hover:text-destructive transition-opacity"
+                          aria-label="Apagar conversa"
+                          title="Apagar conversa"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1 flex items-center gap-1.5">
                 <GraduationCap className="h-3 w-3" />
                 Modo Estudo
               </h3>
@@ -538,6 +643,8 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
               studyMode={studyMode}
               activeLearning={activeLearning}
               chatKey={chatKey}
+              threadId={threadId}
+              onThreadCreated={handleThreadCreated}
               userName={profile?.full_name || undefined}
               userEmail={user.email}
               userRole={profile?.role}

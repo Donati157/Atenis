@@ -294,6 +294,37 @@ interface ChatRequestBody {
   corrector?: CorrectorId | null
   studyMode?: StudyModeId | null
   activeLearning?: boolean
+  threadId?: string | null
+}
+
+// Memória v1: traz os títulos das últimas N conversas do aluno pra dar
+// continuidade entre sessões. Custo zero de IA (uma query só).
+async function recentThreadsSummary(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  excludeThreadId: string | null,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("chat_threads")
+    .select("id, title, updated_at, subject, exam_prep")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(5)
+  if (error || !data || data.length === 0) return ""
+
+  const recent = data.filter((t) => t.id !== excludeThreadId).slice(0, 4)
+  if (recent.length === 0) return ""
+
+  const lines = recent.map((t) => {
+    const ctx = [t.subject, t.exam_prep].filter(Boolean).join(", ")
+    return ctx ? `- "${t.title}" (${ctx})` : `- "${t.title}"`
+  })
+  return `## CONVERSAS RECENTES DO ALUNO
+Você já conversou com esse aluno sobre os tópicos abaixo. Use como contexto
+de continuidade — se ele perguntar "lembra daquilo que falamos?", referencie.
+Não jogue isso na cara dele logo de cara; só puxe se a conversa atual conectar.
+
+${lines.join("\n")}`
 }
 
 export async function POST(req: Request) {
@@ -305,18 +336,22 @@ export async function POST(req: Request) {
     corrector,
     studyMode,
     activeLearning,
+    threadId: incomingThreadId,
   }: ChatRequestBody = await req.json()
+
+  const supabase = await createClient()
 
   // Pega série e nome do aluno autenticado pra injetar no prompt.
   // Se falhar (não logado, etc.) seguimos sem contexto.
   let gradeLevel: string | null = null
   let fullName: string | null = null
+  let userId: string | null = null
   try {
-    const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
     if (user) {
+      userId = user.id
       const { data: profile } = await supabase
         .from("profiles")
         .select("grade_level, full_name")
@@ -329,15 +364,63 @@ export async function POST(req: Request) {
     // ignora — segue sem contexto do aluno
   }
 
+  // Histórico/persistência: thread vem com id gerado no cliente (UUID).
+  // Se ainda não existe na tabela, cria. Salva a mensagem mais recente do
+  // aluno. Se o user não está logado, pula tudo silenciosamente.
+  let threadId: string | null = incomingThreadId ?? null
+  if (userId && threadId) {
+    // Tenta criar — se id já existe, é a 2ª+ msg da mesma conversa: ignora.
+    const lastUser = [...messages].reverse().find((m) => m.role === "user")
+    const firstText =
+      lastUser?.parts
+        .filter((p): p is { type: "text"; text: string } => p.type === "text")
+        .map((p) => p.text)
+        .join(" ")
+        .trim() ?? ""
+    const title = firstText
+      ? firstText.slice(0, 60) + (firstText.length > 60 ? "…" : "")
+      : "Nova conversa"
+
+    await supabase.from("chat_threads").upsert(
+      {
+        id: threadId,
+        user_id: userId,
+        title,
+        subject: subject ?? null,
+        sub_subject: subSubject ?? null,
+        exam_prep: examPrep ?? null,
+        corrector: corrector ?? null,
+        study_mode: studyMode ?? null,
+        active_learning: !!activeLearning,
+      },
+      { onConflict: "id", ignoreDuplicates: true },
+    )
+
+    // Persiste só a última mensagem do user — as anteriores já foram salvas
+    // em requests passadas neste thread.
+    const lastUserMsg = messages[messages.length - 1]
+    if (lastUserMsg?.role === "user") {
+      await supabase.from("chat_messages").insert({
+        thread_id: threadId,
+        user_id: userId,
+        role: "user",
+        parts: lastUserMsg.parts as unknown as object,
+      })
+    }
+  }
+
   // Ordem das camadas: BASE (missão, fontes) → VOZ (persona, tom, limites)
-  // → SÉRIE (escopo BNCC, regras absolutas) → matéria → sub-matéria → prep
-  // → corretor → modo de estudo → active learning. VOZ entra cedo pra que
-  // todas as camadas seguintes herdem o tom.
+  // → SÉRIE (escopo BNCC, regras absolutas) → MEMÓRIA (conversas recentes)
+  // → matéria → sub-matéria → prep → corretor → modo de estudo → active learning.
   const systemParts = [
     BASE_SYSTEM,
     VOICE_PROMPT,
     gradeContextPrompt(gradeLevel, fullName),
   ]
+  if (userId) {
+    const mem = await recentThreadsSummary(supabase, userId, threadId)
+    if (mem) systemParts.push(mem)
+  }
   if (subject && SUBJECT_PROMPTS[subject]) systemParts.push(SUBJECT_PROMPTS[subject])
   if (subSubject && SUB_SUBJECT_PROMPTS[subSubject]) {
     systemParts.push(SUB_SUBJECT_PROMPTS[subSubject])
@@ -358,10 +441,40 @@ export async function POST(req: Request) {
     system: systemParts.join("\n\n"),
     messages: await convertToModelMessages(messages),
     abortSignal: req.signal,
+    onFinish: async ({ response }) => {
+      // Persiste a resposta do assistente quando o stream termina (ou aborta
+      // limpo). Se for abort/erro, response.messages ainda chega — salvamos
+      // o que veio. Falhas aqui não devem quebrar a resposta pro usuário.
+      if (!userId || !threadId) return
+      try {
+        const assistantMsg = response.messages.find((m) => m.role === "assistant")
+        if (!assistantMsg) return
+        // Converte ResponseMessage.content (array de partes do modelo) pro
+        // formato UI parts (text-only — outras partes ficam como objeto).
+        const parts = Array.isArray(assistantMsg.content)
+          ? assistantMsg.content
+              .filter((p) => p.type === "text")
+              .map((p) => ({ type: "text", text: (p as { text: string }).text }))
+          : []
+        if (parts.length === 0) return
+        await supabase.from("chat_messages").insert({
+          thread_id: threadId,
+          user_id: userId,
+          role: "assistant",
+          parts,
+        })
+      } catch {
+        // silencioso — perda de log de uma mensagem não pode quebrar o chat
+      }
+    },
   })
 
-  return result.toUIMessageStreamResponse({
+  const response = result.toUIMessageStreamResponse({
     originalMessages: messages,
     consumeSseStream: consumeStream,
   })
+  // Devolve o threadId pro cliente saber em qual thread está, e poder
+  // adicionar à URL / sidebar sem precisar de outra request.
+  if (threadId) response.headers.set("x-thread-id", threadId)
+  return response
 }
