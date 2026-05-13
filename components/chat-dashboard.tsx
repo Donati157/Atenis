@@ -22,7 +22,6 @@ import {
   type CorrectorId,
   type SubSubjectId,
 } from "@/lib/subjects"
-import { STUDY_MODES, type StudyModeId } from "@/lib/study-modes"
 import {
   LogOut,
   Home,
@@ -32,8 +31,6 @@ import {
   CheckSquare,
   Users,
   Shield,
-  GraduationCap,
-  Lightbulb,
   TrendingUp,
   Calendar,
   HelpCircle,
@@ -77,8 +74,6 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
   const [subSubject, setSubSubject] = useState<SubSubjectId | null>(null)
   const [examPrep, setExamPrep] = useState<ExamPrepId | null>(null)
   const [corrector, setCorrector] = useState<CorrectorId | null>(null)
-  const [studyMode, setStudyMode] = useState<StudyModeId | null>(null)
-  const [activeLearning, setActiveLearning] = useState(false)
   const [chatKey, setChatKey] = useState(0)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [threads, setThreads] = useState<
@@ -144,7 +139,6 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setSubSubject(null)
     setExamPrep(null)
     setCorrector(null)
-    setStudyMode(null)
     setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
@@ -190,15 +184,6 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setSubject(null)
     setSubSubject(null)
     setExamPrep(null)
-    setStudyMode(null)
-    setThreadId(null)
-    setChatKey((k) => k + 1)
-    setSidebarOpen(false)
-  }
-
-  const selectStudyMode = (id: StudyModeId) => {
-    setStudyMode((cur) => (cur === id ? null : id))
-    setCorrector(null)
     setThreadId(null)
     setChatKey((k) => k + 1)
     setSidebarOpen(false)
@@ -213,7 +198,6 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
           subject ?? "_",
           subSubject ?? "_",
           examPrep ?? "_",
-          studyMode ?? "_",
         ].join(".")}`
         window.localStorage.removeItem(draftKey)
       } catch {
@@ -279,28 +263,6 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
             </button>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Modo Socrático: texto em md+, só ícone em mobile */}
-            <Button
-              variant={activeLearning ? "default" : "outline"}
-              size="sm"
-              className="hidden md:inline-flex"
-              onClick={() => setActiveLearning((v) => !v)}
-              title="Modo Socrático: a IA dá pistas e pede sua tentativa antes de responder"
-            >
-              <Lightbulb className="h-4 w-4" />
-              {activeLearning ? "Socrático ON" : "Modo Socrático"}
-            </Button>
-            <Button
-              variant={activeLearning ? "default" : "ghost"}
-              size="icon"
-              className="md:hidden"
-              onClick={() => setActiveLearning((v) => !v)}
-              aria-label={activeLearning ? "Desativar Modo Socrático" : "Ativar Modo Socrático"}
-              title="Modo Socrático"
-            >
-              <Lightbulb className="h-4 w-4" />
-            </Button>
-
             {/* Nova conversa: texto em sm+, só ícone em mobile */}
             <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={newChat}>
               <Plus className="h-4 w-4" />
@@ -483,35 +445,6 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
               </div>
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1 flex items-center gap-1.5">
-                <GraduationCap className="h-3 w-3" />
-                Modo Estudo
-              </h3>
-              <div className="space-y-1">
-                {STUDY_MODES.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => selectStudyMode(m.id)}
-                    className={cn(
-                      "w-full text-sm px-3 py-2 rounded-lg transition-colors text-left flex items-center gap-2",
-                      studyMode === m.id
-                        ? "bg-accent/15 text-accent"
-                        : "hover:bg-secondary/50 text-foreground/80",
-                    )}
-                    title={m.description}
-                  >
-                    <span>{m.emoji}</span>
-                    <div className="flex flex-col min-w-0">
-                      <span>{m.label}</span>
-                      <span className="text-[10px] text-muted-foreground truncate">
-                        {m.description}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="mb-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
@@ -640,8 +573,6 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
               subSubject={subSubject}
               examPrep={examPrep}
               corrector={corrector}
-              studyMode={studyMode}
-              activeLearning={activeLearning}
               chatKey={chatKey}
               threadId={threadId}
               onThreadCreated={handleThreadCreated}

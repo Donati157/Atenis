@@ -10,12 +10,8 @@ import {
   type CorrectorId,
   type SubSubjectId,
 } from "@/lib/subjects"
-import {
-  STUDY_MODE_PROMPTS,
-  ACTIVE_LEARNING_PROMPT,
-  type StudyModeId,
-} from "@/lib/study-modes"
 import { VOICE_PROMPT } from "@/lib/voice"
+import { TEACHING_METHODS_PROMPT } from "@/lib/teaching-methods"
 import { createClient } from "@/lib/supabase/server"
 
 const GRADE_LABELS: Record<string, string> = {
@@ -292,8 +288,6 @@ interface ChatRequestBody {
   subSubject?: SubSubjectId | null
   examPrep?: ExamPrepId | null
   corrector?: CorrectorId | null
-  studyMode?: StudyModeId | null
-  activeLearning?: boolean
   threadId?: string | null
 }
 
@@ -334,8 +328,6 @@ export async function POST(req: Request) {
     subSubject,
     examPrep,
     corrector,
-    studyMode,
-    activeLearning,
     threadId: incomingThreadId,
   }: ChatRequestBody = await req.json()
 
@@ -390,8 +382,6 @@ export async function POST(req: Request) {
         sub_subject: subSubject ?? null,
         exam_prep: examPrep ?? null,
         corrector: corrector ?? null,
-        study_mode: studyMode ?? null,
-        active_learning: !!activeLearning,
       },
       { onConflict: "id", ignoreDuplicates: true },
     )
@@ -410,12 +400,15 @@ export async function POST(req: Request) {
   }
 
   // Ordem das camadas: BASE (missão, fontes) → VOZ (persona, tom, limites)
-  // → SÉRIE (escopo BNCC, regras absolutas) → MEMÓRIA (conversas recentes)
-  // → matéria → sub-matéria → prep → corretor → modo de estudo → active learning.
+  // → SÉRIE (escopo BNCC, regras absolutas) → HABILIDADES (5 métodos de
+  // ensino + socrático) → MEMÓRIA (conversas recentes) → matéria →
+  // sub-matéria → prep → corretor. As habilidades vêm sempre carregadas;
+  // a IA escolhe qual aplicar lendo a mensagem do aluno.
   const systemParts = [
     BASE_SYSTEM,
     VOICE_PROMPT,
     gradeContextPrompt(gradeLevel, fullName),
+    TEACHING_METHODS_PROMPT,
   ]
   if (userId) {
     const mem = await recentThreadsSummary(supabase, userId, threadId)
@@ -427,8 +420,6 @@ export async function POST(req: Request) {
   }
   if (examPrep && EXAM_PROMPTS[examPrep]) systemParts.push(EXAM_PROMPTS[examPrep])
   if (corrector && CORRECTOR_PROMPTS[corrector]) systemParts.push(CORRECTOR_PROMPTS[corrector])
-  if (studyMode && STUDY_MODE_PROMPTS[studyMode]) systemParts.push(STUDY_MODE_PROMPTS[studyMode])
-  if (activeLearning) systemParts.push(ACTIVE_LEARNING_PROMPT)
 
   const result = streamText({
     model: google("gemini-2.5-flash-lite"),

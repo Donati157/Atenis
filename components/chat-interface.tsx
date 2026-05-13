@@ -29,7 +29,6 @@ import {
   type CorrectorId,
   type SubSubjectId,
 } from "@/lib/subjects"
-import { STUDY_MODES, type StudyModeId } from "@/lib/study-modes"
 
 // Junta todos os text parts de uma mensagem do modelo, deduplicando.
 // O Gemini, ao usar tool calls (ex: google_search), pode emitir múltiplos
@@ -186,247 +185,60 @@ const EXAM_PREP_SUGGESTIONS: Record<ExamPrepId, string[]> = {
   ],
 }
 
-const STUDY_MODE_SUGGESTIONS: Record<StudyModeId, string[]> = {
-  explain: [
-    "Me explique do zero: função quadrática",
-    "Explica pra mim o que é fotossíntese",
-    "Me ensine sobre a Era Vargas",
-    "Explica o que é o passado perfeito em inglês",
-  ],
-  review: [
-    "Resumo relâmpago: Revolução Francesa",
-    "Pontos que mais caem: funções do 2º grau",
-    "Revisão rápida: figuras de linguagem",
-    "Checklist antes da prova: termoquímica",
-  ],
-  practice: [
-    "Me dê 1 questão de interpretação de texto nível médio",
-    "Quero treinar equações do 2º grau — manda uma",
-    "Me dê um exercício de genética mendeliana",
-    "Exercício de English reading comprehension",
-  ],
-  simulate: [
-    "Monte um mini-simulado ENEM de 5 questões (linguagens)",
-    "Simulado Fuvest: 5 questões de matemática",
-    "Simulado AP Lang: 5 MCQs de retórica",
-    "Simulado interdisciplinar: ciências da natureza (5Q)",
-  ],
-}
-
-// Mapa concreto: cada (matéria/sub-matéria, modo) tem um set de prompts
-// realmente específicos pro conteúdo da matéria — não só interpolando o nome.
+// Sugestões iniciais por matéria/sub-matéria. Cada lista mostra as 4
+// habilidades de ensino (Explicar, Revisar, Exercícios, Simulado) com prompts
+// específicos — assim o aluno descobre por contato o que a IA sabe fazer,
+// sem precisar escolher modo no sidebar (a IA detecta pela frase).
 type ContentKey = SubjectId | SubSubjectId
-const SUBJECT_BY_MODE_SUGGESTIONS: Partial<
-  Record<ContentKey, Record<StudyModeId, string[]>>
-> = {
-  portugues: {
-    explain: [
-      "Me explique do zero o que é figura de linguagem",
-      "Explica a estrutura da redação dissertativa-argumentativa",
-      "O que é oração subordinada? Explica com exemplos",
-      "Me ensine os tempos verbais do indicativo",
-    ],
-    review: [
-      "Resumo relâmpago: classes gramaticais",
-      "5 erros mais comuns na redação ENEM",
-      "Mini-quiz de crase (3 perguntas)",
-      "Pegadinhas de pontuação que mais caem em prova",
-    ],
-    practice: [
-      "Me dê 1 questão de interpretação de texto nível médio",
-      "Quero treinar análise sintática — manda uma oração",
-      "Exercício de figuras de linguagem com correção",
-      "Questão de gramática estilo ENEM pra eu tentar",
-    ],
-    simulate: [
-      "Mini-simulado de Português: 5 questões ENEM (linguagens)",
-      "Simulado Fuvest: 5 questões de gramática",
-      "Tema de redação ENEM + 30min pra eu tentar",
-      "5 questões objetivas de literatura brasileira",
-    ],
-  },
-  ingles: {
-    explain: [
-      "Me explique a diferença entre present perfect e simple past",
-      "Explica passo a passo como usar reported speech",
-      "O que é phrasal verb? Explica com 5 exemplos comuns",
-      "Me ensine como estruturar um essay em inglês",
-    ],
-    review: [
-      "Resumo relâmpago: tempos verbais em inglês",
-      "5 erros que brasileiros sempre cometem em inglês",
-      "Mini-quiz de false friends (3 perguntas)",
-      "Pegadinhas de prepositions que mais caem em prova",
-    ],
-    practice: [
-      "Me dê um reading comprehension nível médio",
-      "Quero treinar verb tenses — manda 5 exercícios",
-      "Exercício de tradução pt → en com correção",
-      "Questão de inglês estilo ENEM pra eu tentar",
-    ],
-    simulate: [
-      "Mini-simulado de Inglês: 5 questões ENEM",
-      "Simulado AP Lang: 5 MCQs de retórica em inglês",
-      "5 questões de leitura nível Cambridge B2",
-      "Simulado Fuvest: 5 questões discursivas em inglês",
-    ],
-  },
-  matematica: {
-    explain: [
-      "Me explique do zero como resolver equação do 2º grau (Bhaskara)",
-      "Explica passo a passo o teorema de Pitágoras",
-      "O que é função afim? Explica com gráfico",
-      "Me ensine progressão aritmética e geométrica",
-    ],
-    review: [
-      "Resumo relâmpago: trigonometria básica",
-      "5 fórmulas de matemática que mais caem no ENEM",
-      "Mini-quiz de logaritmo (3 perguntas)",
-      "Pegadinhas de geometria espacial em prova",
-    ],
-    practice: [
-      "Me dê 1 questão de função quadrática nível médio",
-      "Quero treinar equações exponenciais — manda uma",
-      "Exercício de geometria analítica com correção",
-      "Questão de matemática estilo ENEM pra eu tentar",
-    ],
-    simulate: [
-      "Mini-simulado de Matemática: 5 questões ENEM",
-      "Simulado Fuvest: 5 questões de funções e cálculo",
-      "Simulado AP Calculus AB: 5 MCQs",
-      "5 questões de probabilidade e estatística",
-    ],
-  },
-  natural_science: {
-    explain: [
-      "Me explique do zero como funciona a fotossíntese",
-      "Explica passo a passo as 3 leis de Newton",
-      "O que é a tabela periódica e como ela se organiza?",
-      "Me ensine a estrutura básica da célula",
-    ],
-    review: [
-      "Resumo relâmpago: cinemática (MRU/MRUV)",
-      "5 conceitos de biologia que mais caem no ENEM",
-      "Mini-quiz de genética mendeliana (3 perguntas)",
-      "Pegadinhas de termodinâmica em prova",
-    ],
-    practice: [
-      "Me dê 1 questão de física nível médio",
-      "Quero treinar estequiometria — manda uma questão",
-      "Exercício de biologia molecular com correção",
-      "Questão de Natural Science estilo ENEM pra tentar",
-    ],
-    simulate: [
-      "Mini-simulado de Natural Science: 5 questões ENEM",
-      "Simulado AP Biology: 5 MCQs",
-      "5 questões interdisciplinares: física + química",
-      "Simulado Fuvest: 5 questões de ciências da natureza",
-    ],
-  },
-  social_science: {
-    explain: [
-      "Me explique a Era Vargas (1930-1945) com fases",
-      "Explica passo a passo a Revolução Francesa",
-      "O que é globalização? Explica com exemplos atuais",
-      "Me ensine sobre placas tectônicas e seus efeitos",
-    ],
-    review: [
-      "Resumo relâmpago: Brasil República",
-      "5 temas de Social Science que mais caem no ENEM",
-      "Mini-quiz de geografia urbana (3 perguntas)",
-      "Pegadinhas de história do Brasil em prova",
-    ],
-    practice: [
-      "Me dê 1 questão de interpretação de texto histórico",
-      "Quero treinar geopolítica — manda uma questão",
-      "Exercício sobre Era Vargas com correção",
-      "Questão de Social Science estilo ENEM pra tentar",
-    ],
-    simulate: [
-      "Mini-simulado de Social Science: 5 questões ENEM",
-      "Simulado AP World History: 5 MCQs",
-      "Simulado Fuvest: 5 questões discursivas de história",
-      "5 questões de geografia interdisciplinar",
-    ],
-  },
-  fisica: {
-    explain: [
-      "Me explique MRU e MRUV (cinemática) com exemplo",
-      "Explica as 3 leis de Newton com exemplos do dia a dia",
-      "O que é energia mecânica? Cinética e potencial",
-      "Me ensine eletricidade: corrente, tensão e resistência",
-    ],
-    review: [
-      "Resumo relâmpago: leis da termodinâmica",
-      "5 fórmulas de física mais cobradas no ENEM",
-      "Mini-quiz de óptica geométrica (3 perguntas)",
-      "Pegadinhas de magnetismo em prova",
-    ],
-    practice: [
-      "Me dê 1 questão de cinemática nível médio",
-      "Quero treinar dinâmica — problema com plano inclinado",
-      "Exercício de eletrodinâmica com correção passo a passo",
-      "Questão de física estilo ENEM pra eu tentar",
-    ],
-    simulate: [
-      "Mini-simulado de Física: 5 questões ENEM",
-      "Simulado Fuvest: 5 questões discursivas de física",
-      "Simulado AP Physics 1: 5 MCQs",
-      "5 questões de mecânica clássica",
-    ],
-  },
-  quimica: {
-    explain: [
-      "Me explique a distribuição eletrônica de Linus Pauling",
-      "Explica passo a passo como balancear equação química",
-      "O que é estequiometria? Com exemplo numérico",
-      "Me ensine ligações químicas: iônica, covalente e metálica",
-    ],
-    review: [
-      "Resumo relâmpago: química orgânica (funções)",
-      "5 reações químicas que mais caem no ENEM",
-      "Mini-quiz de ácidos e bases (3 perguntas)",
-      "Pegadinhas de mol e número de Avogadro",
-    ],
-    practice: [
-      "Me dê 1 questão de estequiometria nível médio",
-      "Quero treinar equilíbrio químico — manda uma",
-      "Exercício de eletroquímica com correção",
-      "Questão de química estilo ENEM pra eu tentar",
-    ],
-    simulate: [
-      "Mini-simulado de Química: 5 questões ENEM",
-      "Simulado Fuvest: 5 questões de química orgânica",
-      "Simulado AP Chemistry: 5 MCQs",
-      "5 questões de química geral",
-    ],
-  },
-  biologia: {
-    explain: [
-      "Me explique do zero o ciclo de Krebs",
-      "Explica a diferença entre mitose e meiose",
-      "Genética mendeliana: cruzamento AaBb × AaBb passo a passo",
-      "Me ensine ecologia: cadeia alimentar e níveis tróficos",
-    ],
-    review: [
-      "Resumo relâmpago: sistema circulatório humano",
-      "5 temas de biologia que mais caem no ENEM",
-      "Mini-quiz de evolução (3 perguntas)",
-      "Pegadinhas de citologia em prova",
-    ],
-    practice: [
-      "Me dê 1 questão de genética nível médio",
-      "Quero treinar fisiologia humana — manda uma",
-      "Exercício de ecologia com correção",
-      "Questão de biologia estilo ENEM pra eu tentar",
-    ],
-    simulate: [
-      "Mini-simulado de Biologia: 5 questões ENEM",
-      "Simulado Fuvest: 5 questões discursivas de biologia",
-      "Simulado AP Biology: 5 MCQs",
-      "5 questões interdisciplinares: ecologia + genética",
-    ],
-  },
+const SUBJECT_SUGGESTIONS: Partial<Record<ContentKey, string[]>> = {
+  portugues: [
+    "Me explique do zero o que é figura de linguagem",
+    "Resumo relâmpago: classes gramaticais",
+    "Me dê 1 questão de interpretação de texto nível médio",
+    "Tenho prova de gramática quinta — me prepara pra tirar 100",
+  ],
+  ingles: [
+    "Me explique a diferença entre present perfect e simple past",
+    "Resumo relâmpago: tempos verbais em inglês",
+    "Me dê um reading comprehension nível médio",
+    "Tenho prova de inglês amanhã — me ajuda a tirar 100",
+  ],
+  matematica: [
+    "Me explique do zero como resolver equação do 2º grau (Bhaskara)",
+    "Resumo relâmpago: trigonometria básica",
+    "Me dê 1 questão de função quadrática nível médio",
+    "Perdi aulas de matemática e tenho prova — me prepara",
+  ],
+  natural_science: [
+    "Me explique do zero como funciona a fotossíntese",
+    "Resumo relâmpago: cinemática (MRU/MRUV)",
+    "Me dê 1 questão de física nível médio",
+    "Tenho prova de ciências sexta — me prepara pra tirar 100",
+  ],
+  social_science: [
+    "Me explique a Era Vargas (1930-1945) com fases",
+    "Resumo relâmpago: Brasil República",
+    "Me dê 1 questão de interpretação de texto histórico",
+    "Tenho prova de história quinta — me prepara",
+  ],
+  fisica: [
+    "Me explique MRU e MRUV (cinemática) com exemplo",
+    "Resumo relâmpago: leis da termodinâmica",
+    "Me dê 1 questão de cinemática nível médio",
+    "Tenho prova de física amanhã — me prepara pra tirar 100",
+  ],
+  quimica: [
+    "Me explique a distribuição eletrônica de Linus Pauling",
+    "Resumo relâmpago: química orgânica (funções)",
+    "Me dê 1 questão de estequiometria nível médio",
+    "Perdi aulas de química — me ajuda a chegar pronto na prova",
+  ],
+  biologia: [
+    "Me explique do zero o ciclo de Krebs",
+    "Resumo relâmpago: sistema circulatório humano",
+    "Me dê 1 questão de genética nível médio",
+    "Tenho prova de biologia sexta — me prepara",
+  ],
 }
 
 interface ChatInterfaceProps {
@@ -434,8 +246,6 @@ interface ChatInterfaceProps {
   subSubject: SubSubjectId | null
   examPrep: ExamPrepId | null
   corrector: CorrectorId | null
-  studyMode: StudyModeId | null
-  activeLearning: boolean
   chatKey: number
   threadId: string | null
   onThreadCreated?: (id: string) => void
@@ -449,8 +259,6 @@ export function ChatInterface({
   subSubject,
   examPrep,
   corrector,
-  studyMode,
-  activeLearning,
   chatKey,
   threadId,
   onThreadCreated,
@@ -479,7 +287,6 @@ export function ChatInterface({
     subject ?? "_",
     subSubject ?? "_",
     examPrep ?? "_",
-    studyMode ?? "_",
   ].join(".")}`
   const [input, setInput, clearDraft] = useDraft(draftKey)
   const [attachments, setAttachments] = useState<Attachment[]>([])
@@ -497,8 +304,6 @@ export function ChatInterface({
           subSubject,
           examPrep,
           corrector,
-          studyMode,
-          activeLearning,
           threadId: effectiveThreadId,
         },
       }),
@@ -507,8 +312,6 @@ export function ChatInterface({
       subSubject,
       examPrep,
       corrector,
-      studyMode,
-      activeLearning,
       effectiveThreadId,
     ],
   )
@@ -685,10 +488,8 @@ export function ChatInterface({
         await logLearningEvent(supabase, data.user.id, {
           kind: "chat_message",
           subject: subject ?? examPrep ?? corrector ?? null,
-          topic: studyMode ?? null,
           metadata: {
             hasAttachments: (fileParts?.length ?? 0) > 0,
-            activeLearning,
           },
         })
       } catch {
@@ -720,26 +521,15 @@ export function ChatInterface({
     : null
 
   // Prioridade:
-  //   corretor
-  //   > studyMode + matéria/sub-matéria (mapa concreto, prompts únicos por
-  //     conteúdo+modo — Simulado de Português ≠ Simulado de Matemática
-  //     ≠ Explicar Português)
-  //   > studyMode genérico (sem matéria escolhida)
-  //   > sub-matéria (sem modo)
-  //   > matéria (sem modo)
-  //   > exam prep
-  //   > default.
+  //   corretor > sub-matéria > matéria > exam prep > default.
+  // As 4 habilidades de ensino (Explicar/Revisar/Exercícios/Simulado) ficam
+  // demonstradas nas sugestões de cada matéria — uma de cada por padrão.
   const contentKey: ContentKey | null = subSubject ?? subject
-  const subjectModeSet =
-    studyMode && contentKey
-      ? SUBJECT_BY_MODE_SUGGESTIONS[contentKey]?.[studyMode]
-      : undefined
+  const subjectSet = contentKey ? SUBJECT_SUGGESTIONS[contentKey] : undefined
   const suggestions = corrector
     ? CORRECTOR_SUGGESTIONS[corrector]
-    : subjectModeSet
-    ? subjectModeSet
-    : studyMode
-    ? STUDY_MODE_SUGGESTIONS[studyMode]
+    : subjectSet
+    ? subjectSet
     : subSubject
     ? SUB_SUBJECT_SUGGESTIONS[subSubject]
     : subject
@@ -748,12 +538,8 @@ export function ChatInterface({
     ? EXAM_PREP_SUGGESTIONS[examPrep]
     : SUGGESTIONS.default
 
-  const studyModeInfo = studyMode ? STUDY_MODES.find((m) => m.id === studyMode) : null
-
   const mainBadge = correctorLabel
     ? { icon: "corrector" as const, text: `Correção: ${correctorLabel}` }
-    : studyModeInfo
-    ? { icon: "default" as const, text: `${studyModeInfo.emoji} ${studyModeInfo.label}` }
     : examLabel
     ? { icon: "default" as const, text: `Preparação: ${examLabel}` }
     : combinedSubjectLabel
@@ -796,23 +582,16 @@ export function ChatInterface({
           </div>
         </div>
       )}
-      {(mainBadge || activeLearning) && (
+      {mainBadge && (
         <div className="flex justify-center gap-2 flex-wrap border-b border-border/50 bg-card/30 py-2 px-4">
-          {mainBadge && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-muted-foreground">
-              {mainBadge.icon === "corrector" ? (
-                <CheckSquare className="h-3 w-3 text-accent" />
-              ) : (
-                <Sparkles className="h-3 w-3 text-accent" />
-              )}
-              {mainBadge.text}
-            </span>
-          )}
-          {activeLearning && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/10 px-3 py-1 text-xs text-accent">
-              🤔 Modo Socrático
-            </span>
-          )}
+          <span className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-muted-foreground">
+            {mainBadge.icon === "corrector" ? (
+              <CheckSquare className="h-3 w-3 text-accent" />
+            ) : (
+              <Sparkles className="h-3 w-3 text-accent" />
+            )}
+            {mainBadge.text}
+          </span>
         </div>
       )}
 
@@ -820,8 +599,7 @@ export function ChatInterface({
         {messages.length === 0 &&
           !subject &&
           !examPrep &&
-          !corrector &&
-          !studyMode && (
+          !corrector && (
             <TutorHome
               userName={userName}
               userEmail={userEmail}
@@ -829,7 +607,7 @@ export function ChatInterface({
             />
           )}
 
-        {messages.length === 0 && (subject || examPrep || corrector || studyMode) && (
+        {messages.length === 0 && (subject || examPrep || corrector) && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 py-8 sm:py-12">
             <div className="mb-3 sm:mb-4 inline-flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-accent/10 text-accent">
               {corrector ? (

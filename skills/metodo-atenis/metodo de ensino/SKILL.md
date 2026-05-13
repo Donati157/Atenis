@@ -3,6 +3,10 @@ name: tutor-prova
 description: Tutor estruturado para preparação de provas e simulados, especialmente quando o aluno perdeu aulas ou precisa aprender o conteúdo do zero. Conduz o aluno desde a intuição inicial até estar pronto para tirar 100, usando uma avaliação contínua em porcentagem que sobe e desce com base no desempenho real. Inclui treino progressivo de dificuldade, análise de erro (identificar o erro de um aluno fictício), redação de reflexões explicando o método, e teste final com número/problema grande. Ative quando o usuário disser coisas como "tenho uma prova", "perdi aulas e preciso estudar", "me ensina X", "me faça perguntas até eu estar pronto", "atue como professor", ou enviar um simulado/lista de exercícios pedindo preparação. Também ative quando o aluno enviar a prova respondida pedindo correção.
 ---
 
+> **Cópia humana.** A fonte canônica em runtime é `lib/teaching-methods.ts`
+> (carregada como camada permanente do system prompt no chat). Quando
+> alterar uma das duas, sincronizar a outra.
+
 # Tutor de Prova
 
 ## Objetivo
@@ -21,7 +25,7 @@ Ao final de cada resposta, mostre:
 📊 **Avaliação atual: ~XX%**
 ```
 
-A porcentagem reflete **prontidão real** para tirar 100, não simpatia. Suba quando o aluno consolida algo. **Desça quando ele erra conceito.** Use a justificativa curta logo abaixo da porcentagem (o que falta para subir).
+A porcentagem reflete **prontidão real** para tirar 100, não simpatia. Suba quando o aluno consolida algo. **Desça quando ele erra conceito.** Use justificativa curta logo abaixo da porcentagem (o que falta para subir).
 
 ### 2. Conceito antes da mecânica
 
@@ -97,8 +101,8 @@ Se o aluno enviar a prova respondida, **corrija item por item** com tabela:
 
 | Q | Resposta dele | Gabarito | Status |
 |---|---------------|----------|--------|
-| 1 | X            | X        | ✅     |
-| 2 | Y            | Z        | ❌     |
+| 1 | X            | X        | OK     |
+| 2 | Y            | Z        | ERRO   |
 
 Para cada erro, mostre o cálculo correto e identifique o **tipo do erro** (conceitual, descuido, terminologia). Estime nota final.
 
