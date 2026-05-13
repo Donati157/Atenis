@@ -239,72 +239,45 @@ const SECTIONS: FaqSection[] = [
     icon: BookOpen,
     items: [
       {
-        q: "Pra que serve cada Modo de Estudo?",
-        a: (
-          <ul className="list-disc pl-5 space-y-1.5">
-            <li>
-              <strong>📚 Explicar</strong>: pra aprender um conteúdo do zero.
-              A IA explica passo a passo, com exemplos e analogias.
-            </li>
-            <li>
-              <strong>🧠 Revisar</strong>: pra refrescar antes da prova. Resumo
-              + pontos que mais caem + mini-quiz.
-            </li>
-            <li>
-              <strong>📝 Exercícios</strong>: questões guiadas, uma por vez,
-              com correção passo a passo.
-            </li>
-            <li>
-              <strong>🎯 Simulado</strong>: bloco de questões no estilo da prova
-              escolhida (ENEM, Fuvest, AP), com correção no fim.
-            </li>
-          </ul>
-        ),
-      },
-      {
-        q: "O que é o Modo Socrático?",
+        q: "O que a IA sabe fazer?",
         a: (
           <>
             <p>
-              É um modo de estudo onde a IA <strong>não te dá a resposta de
-              cara</strong>. Em vez disso, ela faz perguntas, dá pistas e te
-              força a tentar primeiro. Só depois de você tentar (e talvez errar
-              algumas vezes) é que ela revela a resposta completa, junto com a
-              explicação.
+              A IA do Atenis tem 5 habilidades de ensino e escolhe sozinha qual
+              usar, baseado no que você pede no chat — não precisa selecionar
+              "modo" em lugar nenhum.
             </p>
-            <p className="mt-2">
-              <strong>De onde vem o nome:</strong> Sócrates, filósofo grego, era
-              famoso por ensinar fazendo perguntas em vez de dar respostas — o
-              "método socrático". A ideia é a mesma: você aprende mais{" "}
-              <em>tentando</em> do que só lendo.
-            </p>
-            <div className="mt-3 rounded-md bg-muted/40 p-3 text-xs space-y-2">
-              <p className="font-semibold">Exemplo prático</p>
-              <p>
-                <strong>Sem Modo Socrático</strong> — você pergunta:{" "}
-                <em>"Qual a fórmula de Bhaskara?"</em>
-                <br />A IA responde: <em>x = (-b ± √(b²-4ac)) / 2a</em>. Pronto.
-              </p>
-              <p>
-                <strong>Com Modo Socrático</strong> — você pergunta a mesma
-                coisa.
-                <br />A IA responde: <em>"Antes de eu te dar — você lembra de
-                alguma fórmula que envolva 'a, b, c' e raiz quadrada? Tenta
-                escrever o que vem à cabeça."</em> Você tenta. Aí ela vai
-                ajustando, dando pistas, até você chegar na fórmula sozinho.
-              </p>
-            </div>
-            <p className="mt-2">
-              <strong>Quando usar:</strong> ótimo pra estudar conteúdo novo,
-              fixar matéria antes de prova, ou treinar pra exercícios. Não tão
-              útil quando você só quer uma resposta rápida (ex: "como se diz
-              'guarda-chuva' em inglês?") — nesse caso, deixe desligado.
-            </p>
-            <p className="mt-2">
-              <strong>Como ativar:</strong> botão "Modo Socrático" no topo da
-              tela do chat. Quando estiver ligado, aparece um selo{" "}
-              <span className="text-accent">🤔 Modo Socrático</span> em cima das
-              respostas.
+            <ul className="list-disc pl-5 space-y-1.5 mt-3">
+              <li>
+                <strong>📚 Explicar</strong> — "me explica X", "o que é Y", "como
+                funciona Z". Conteúdo do zero com analogia e exemplo prático.
+              </li>
+              <li>
+                <strong>🧠 Revisar</strong> — "me revisa X", "resumo de Y", "pontos
+                que mais caem em Z". Resumo + mini-quiz + pegadinhas.
+              </li>
+              <li>
+                <strong>📝 Exercícios</strong> — "me dá uma questão de X", "quero
+                treinar Y". Uma questão por vez, com correção passo a passo. A
+                IA espera você tentar antes de dar a resposta (técnica socrática).
+              </li>
+              <li>
+                <strong>🎯 Simulado</strong> — "monte um simulado de X", "5
+                questões de Y", "simulado ENEM/Fuvest/AP". Bloco completo, sem
+                gabarito até você entregar.
+              </li>
+              <li>
+                <strong>🧑‍🏫 Tutor de Prova</strong> — "tenho prova de X", "perdi
+                aulas de Y", "me prepara pra tirar 100". Jornada completa: de
+                "perdi aulas" até "tiro 100" com avaliação contínua em
+                porcentagem a cada turno, análise de erro, reflexão escrita e
+                correção da prova no final.
+              </li>
+            </ul>
+            <p className="mt-3">
+              Só fala no chat o que precisa. Pode trocar de habilidade no meio
+              da conversa (ex: termina explicação → pede questão → vira modo
+              Exercícios automaticamente).
             </p>
           </>
         ),
