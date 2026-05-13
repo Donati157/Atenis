@@ -11,7 +11,8 @@ next-env.d.ts
 # Local tooling / IDE / harness — não pertence ao repo
 .claude/
 .tools/
-skills/
+# skills/ é doc humana de voz e método do Atenis — fonte canônica em lib/voice.ts
+# (entra no repo; ignorado só no .vercelignore pra não inchar o build).
 
 # Pastas de outros projetos que moram aqui localmente
 Google Chrome.app/
