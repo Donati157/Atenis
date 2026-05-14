@@ -1,3 +1,5 @@
+import { MATEMATICA_CURRICULUM } from "./curriculum/matematica"
+
 export const SUBJECTS = [
   { id: "ingles", label: "Inglês", emoji: "🌍" },
   { id: "portugues", label: "Português", emoji: "📖" },
@@ -71,8 +73,9 @@ export const SUBJECT_PROMPTS: Record<SubjectId, string> = {
     "Foco da conversa: Português — gramática, interpretação de texto, literatura e redação. Dê exemplos em português do Brasil.",
   ingles:
     "Foco da conversa: Inglês — gramática, vocabulário, conversação e compreensão de texto. Explique sempre em português brasileiro, mostrando os exemplos em inglês.",
-  matematica:
-    "Foco da conversa: Matemática — álgebra, geometria, funções, estatística e cálculo. Resolva passo a passo e use LaTeX quando fizer sentido ($...$).",
+  matematica: `Foco da conversa: Matemática — álgebra, geometria, funções, estatística e cálculo. Resolva passo a passo e use LaTeX quando fizer sentido ($...$).
+
+${MATEMATICA_CURRICULUM}`,
   natural_science:
     "Foco da conversa: Natural Science — física, química e biologia. Use analogias do dia a dia e mostre unidades e fórmulas quando aplicável. Use terminologia em inglês quando apropriado (AP-friendly).",
   social_science:
