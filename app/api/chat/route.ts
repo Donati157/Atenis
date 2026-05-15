@@ -289,7 +289,13 @@ interface ChatRequestBody {
   examPrep?: ExamPrepId | null
   corrector?: CorrectorId | null
   threadId?: string | null
+  // Quando true, a IA responde "como qualquer assistente genérico" — sem
+  // a voz Atenis, sem as 5 habilidades de ensino, sem currículo. Útil pra
+  // o aluno comparar "IA padrão" vs "tutor Atenis".
+  vanillaMode?: boolean
 }
+
+const VANILLA_SYSTEM = `Você é um assistente útil. Responda em português brasileiro de forma clara e direta.`
 
 // Memória v1: traz os títulos das últimas N conversas do aluno pra dar
 // continuidade entre sessões. Custo zero de IA (uma query só).
@@ -329,6 +335,7 @@ export async function POST(req: Request) {
     examPrep,
     corrector,
     threadId: incomingThreadId,
+    vanillaMode,
   }: ChatRequestBody = await req.json()
 
   const supabase = await createClient()
@@ -399,27 +406,34 @@ export async function POST(req: Request) {
     }
   }
 
-  // Ordem das camadas: BASE (missão, fontes) → VOZ (persona, tom, limites)
-  // → SÉRIE (escopo BNCC, regras absolutas) → HABILIDADES (5 métodos de
-  // ensino + socrático) → MEMÓRIA (conversas recentes) → matéria →
-  // sub-matéria → prep → corretor. As habilidades vêm sempre carregadas;
-  // a IA escolhe qual aplicar lendo a mensagem do aluno.
-  const systemParts = [
-    BASE_SYSTEM,
-    VOICE_PROMPT,
-    gradeContextPrompt(gradeLevel, fullName),
-    TEACHING_METHODS_PROMPT,
-  ]
-  if (userId) {
-    const mem = await recentThreadsSummary(supabase, userId, threadId)
-    if (mem) systemParts.push(mem)
+  // Em modo "Normal" (vanilla), pula TODAS as camadas Atenis (persona,
+  // habilidades, série, currículo, matéria, memória) e usa só um system
+  // prompt minimalista — assim o aluno consegue comparar como uma IA
+  // genérica responde vs como o Atenis responde.
+  const systemParts: string[] = vanillaMode
+    ? [VANILLA_SYSTEM]
+    : [
+        // Ordem das camadas Atenis: BASE (missão, fontes) → VOZ (persona,
+        // tom, limites) → SÉRIE (escopo BNCC, regras absolutas) →
+        // HABILIDADES (5 métodos de ensino + socrático) → MEMÓRIA →
+        // matéria → sub-matéria → prep → corretor.
+        BASE_SYSTEM,
+        VOICE_PROMPT,
+        gradeContextPrompt(gradeLevel, fullName),
+        TEACHING_METHODS_PROMPT,
+      ]
+  if (!vanillaMode) {
+    if (userId) {
+      const mem = await recentThreadsSummary(supabase, userId, threadId)
+      if (mem) systemParts.push(mem)
+    }
+    if (subject && SUBJECT_PROMPTS[subject]) systemParts.push(SUBJECT_PROMPTS[subject])
+    if (subSubject && SUB_SUBJECT_PROMPTS[subSubject]) {
+      systemParts.push(SUB_SUBJECT_PROMPTS[subSubject])
+    }
+    if (examPrep && EXAM_PROMPTS[examPrep]) systemParts.push(EXAM_PROMPTS[examPrep])
+    if (corrector && CORRECTOR_PROMPTS[corrector]) systemParts.push(CORRECTOR_PROMPTS[corrector])
   }
-  if (subject && SUBJECT_PROMPTS[subject]) systemParts.push(SUBJECT_PROMPTS[subject])
-  if (subSubject && SUB_SUBJECT_PROMPTS[subSubject]) {
-    systemParts.push(SUB_SUBJECT_PROMPTS[subSubject])
-  }
-  if (examPrep && EXAM_PROMPTS[examPrep]) systemParts.push(EXAM_PROMPTS[examPrep])
-  if (corrector && CORRECTOR_PROMPTS[corrector]) systemParts.push(CORRECTOR_PROMPTS[corrector])
 
   const result = streamText({
     model: google("gemini-2.5-flash-lite"),

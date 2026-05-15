@@ -39,6 +39,8 @@ import {
   Compass,
   MessageSquare,
   Trash2,
+  Sparkles,
+  Globe,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -76,6 +78,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
   const [corrector, setCorrector] = useState<CorrectorId | null>(null)
   const [chatKey, setChatKey] = useState(0)
   const [threadId, setThreadId] = useState<string | null>(null)
+  const [vanillaMode, setVanillaMode] = useState(false)
   const [threads, setThreads] = useState<
     Array<{ id: string; title: string; subject: string | null; exam_prep: string | null; updated_at: string }>
   >([])
@@ -263,6 +266,44 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
             </button>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Toggle Modo Atenis ↔ Modo Normal */}
+            <Button
+              variant={vanillaMode ? "outline" : "default"}
+              size="sm"
+              className="hidden md:inline-flex"
+              onClick={() => setVanillaMode((v) => !v)}
+              title={
+                vanillaMode
+                  ? "Modo Normal: IA genérica, sem o método Atenis. Clique pra voltar ao Atenis."
+                  : "Modo Atenis: tutor completo (5 habilidades de ensino + voz + currículo). Clique pra ver como uma IA genérica responderia."
+              }
+            >
+              {vanillaMode ? (
+                <Globe className="h-4 w-4" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {vanillaMode ? "Modo Normal" : "Modo Atenis"}
+            </Button>
+            <Button
+              variant={vanillaMode ? "outline" : "default"}
+              size="icon"
+              className="md:hidden"
+              onClick={() => setVanillaMode((v) => !v)}
+              aria-label={
+                vanillaMode
+                  ? "Mudar pra Modo Atenis"
+                  : "Mudar pra Modo Normal"
+              }
+              title={vanillaMode ? "Modo Normal" : "Modo Atenis"}
+            >
+              {vanillaMode ? (
+                <Globe className="h-4 w-4" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+            </Button>
+
             {/* Nova conversa: texto em sm+, só ícone em mobile */}
             <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={newChat}>
               <Plus className="h-4 w-4" />
@@ -575,6 +616,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
               corrector={corrector}
               chatKey={chatKey}
               threadId={threadId}
+              vanillaMode={vanillaMode}
               onThreadCreated={handleThreadCreated}
               userName={profile?.full_name || undefined}
               userEmail={user.email}

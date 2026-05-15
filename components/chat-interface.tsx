@@ -248,6 +248,7 @@ interface ChatInterfaceProps {
   corrector: CorrectorId | null
   chatKey: number
   threadId: string | null
+  vanillaMode: boolean
   onThreadCreated?: (id: string) => void
   userName?: string
   userEmail?: string | null
@@ -261,6 +262,7 @@ export function ChatInterface({
   corrector,
   chatKey,
   threadId,
+  vanillaMode,
   onThreadCreated,
   userName,
   userEmail,
@@ -305,6 +307,7 @@ export function ChatInterface({
           examPrep,
           corrector,
           threadId: effectiveThreadId,
+          vanillaMode,
         },
       }),
     [
@@ -313,6 +316,7 @@ export function ChatInterface({
       examPrep,
       corrector,
       effectiveThreadId,
+      vanillaMode,
     ],
   )
 
@@ -582,16 +586,23 @@ export function ChatInterface({
           </div>
         </div>
       )}
-      {mainBadge && (
+      {(mainBadge || vanillaMode) && (
         <div className="flex justify-center gap-2 flex-wrap border-b border-border/50 bg-card/30 py-2 px-4">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-muted-foreground">
-            {mainBadge.icon === "corrector" ? (
-              <CheckSquare className="h-3 w-3 text-accent" />
-            ) : (
-              <Sparkles className="h-3 w-3 text-accent" />
-            )}
-            {mainBadge.text}
-          </span>
+          {mainBadge && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-muted-foreground">
+              {mainBadge.icon === "corrector" ? (
+                <CheckSquare className="h-3 w-3 text-accent" />
+              ) : (
+                <Sparkles className="h-3 w-3 text-accent" />
+              )}
+              {mainBadge.text}
+            </span>
+          )}
+          {vanillaMode && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-muted-foreground/50 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+              🌐 Modo Normal (IA genérica)
+            </span>
+          )}
         </div>
       )}
 
