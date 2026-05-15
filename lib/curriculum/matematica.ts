@@ -138,11 +138,4 @@ tópicos relacionados ou pré-requisitos da mesma categoria.
 - Ângulos entre retas; paralelismo e perpendicularismo
 - Equações da circunferência (reduzida, geral)
 - Regiões e áreas dos polígonos no plano cartesiano
-
----
-
-Não invente tópicos fora desta lista como se fossem do currículo oficial.
-Se o aluno trouxer um tópico que NÃO está aqui (ex: cálculo diferencial,
-álgebra linear avançada), reconheça que está fora do currículo dele e
-pergunte se ele quer mesmo seguir — pode ser conteúdo de faculdade.
 `
