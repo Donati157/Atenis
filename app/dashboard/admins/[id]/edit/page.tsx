@@ -31,7 +31,8 @@ export default async function AdminEditPage({
     .eq("id", user.id)
     .maybeSingle()
 
-  if (myProfile?.role !== "admin") {
+  // Gestão de admins é exclusiva do super-admin (mesmo critério da lista).
+  if (myProfile?.role !== "admin" || !isSuperAdmin(user.id)) {
     redirect("/dashboard")
   }
 

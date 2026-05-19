@@ -11,6 +11,7 @@ import { GCDCorrector } from "@/components/gcd/gcd-corrector"
 import { APCorrector } from "@/components/ap/ap-corrector"
 import { ENEMCorrector } from "@/components/enem/enem-corrector"
 import { createClient } from "@/lib/supabase/client"
+import { isSuperAdmin } from "@/lib/super-admin"
 import {
   SUBJECTS,
   EXAM_PREPS,
@@ -397,7 +398,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
                       <span>Liderança</span>
                     </Link>
                   )}
-                  {profile?.role === "admin" && (
+                  {profile?.role === "admin" && isSuperAdmin(user.id) && (
                     <Link
                       href="/dashboard/admins"
                       className="w-full text-sm px-3 py-2 rounded-lg transition-colors text-left flex items-center gap-2 hover:bg-secondary/50 text-foreground/80"

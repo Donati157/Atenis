@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { AdminsList, type Admin } from "@/components/admins/admins-list"
 import { ArrowLeft, Shield } from "lucide-react"
+import { isSuperAdmin } from "@/lib/super-admin"
 
 export const dynamic = "force-dynamic"
 
@@ -22,7 +23,11 @@ export default async function AdminsPage() {
     .eq("id", user.id)
     .maybeSingle()
 
-  if (myProfile?.role !== "admin") {
+  // Gestão de admins é exclusiva do super-admin. Admins normais (que podem
+  // gerenciar alunos/professores/liderança) NÃO entram aqui — nem veem o
+  // link no sidebar. As únicas ações úteis na página requerem super-admin
+  // de qualquer jeito (promover/rebaixar via RPC, trocar senha de admin).
+  if (myProfile?.role !== "admin" || !isSuperAdmin(user.id)) {
     redirect("/dashboard")
   }
 
