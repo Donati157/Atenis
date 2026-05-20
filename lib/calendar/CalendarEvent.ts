@@ -122,7 +122,7 @@ export abstract class CalendarEvent {
   }
 }
 
-export type EventCategory = "study" | "exam" | "assignment" | "school_day"
+export type EventCategory = "study" | "exam" | "assignment" | "school_day" | "vacation"
 
 export type SerializedEvent = {
   id: string

@@ -100,6 +100,7 @@ export class EventList {
       exam: 0,
       assignment: 0,
       school_day: 0,
+      vacation: 0,
     }
     for (const ev of this.items) {
       counts[ev.getCategory()]++

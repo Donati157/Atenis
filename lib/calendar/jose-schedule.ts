@@ -12,7 +12,7 @@
  */
 
 import { Period } from "./Period"
-import { SchoolDayEvent } from "./EventTypes"
+import { SchoolDayEvent, VacationEvent } from "./EventTypes"
 
 // Tradução de dias-da-semana → minutos. Aritmética inteira: H * 60 + M.
 const T = (h: number, m: number): number => h * 60 + m
@@ -123,6 +123,119 @@ export const JOSE_SCHEDULE: ReadonlyArray<DayDefinition> = [
     cycle: 2,
     periods: ["Matemática", "Advisory", "Break", "Educação Física", "Português", "Almoço", "AP Seminar"],
   },
+
+  // ─── Junho 2026 ─────────────────────────────────────────────────
+  // Rotação 1-6 continua a partir do último dia de maio (cycle 2).
+  // Posições 4 (entre Break e P2) seguem o padrão observado em maio:
+  // alternância de Projeto / Extra de Ciências / Francês / Educação
+  // Física; quintas em cycle 1 ou 2 ficam com "X Block de quinta".
+  // Cycle 3 mantém 6 períodos (sem posição 4). Recesso 26-30/jun é
+  // tratado separadamente via JOSE_VACATIONS abaixo.
+  {
+    date: "2026-06-01",
+    cycle: 3,
+    periods: ["AP Computer Science", "Advisory", "Break", "Inglês", "Almoço", "Química"],
+  },
+  {
+    date: "2026-06-02",
+    cycle: 4,
+    periods: ["AP Seminar", "Advisory", "Break", "Projeto", "Matemática", "Almoço", "Português"],
+  },
+  {
+    date: "2026-06-03",
+    cycle: 5,
+    periods: ["Física", "Advisory", "Break", "Extra de Ciências", "AP Computer Science", "Almoço", "Inglês"],
+  },
+  {
+    date: "2026-06-04",
+    cycle: 6,
+    periods: ["Português", "Advisory", "Break", "Francês", "AP Seminar", "Almoço", "Matemática"],
+  },
+  {
+    date: "2026-06-05",
+    cycle: 1,
+    periods: ["Inglês", "Advisory", "Break", "Extra de Ciências", "Biologia", "Almoço", "AP Computer Science"],
+  },
+  {
+    date: "2026-06-08",
+    cycle: 2,
+    periods: ["Matemática", "Advisory", "Break", "Francês", "Português", "Almoço", "AP Seminar"],
+  },
+  {
+    date: "2026-06-09",
+    cycle: 3,
+    periods: ["AP Computer Science", "Advisory", "Break", "Inglês", "Almoço", "Química"],
+  },
+  {
+    date: "2026-06-10",
+    cycle: 4,
+    periods: ["AP Seminar", "Advisory", "Break", "Educação Física", "Matemática", "Almoço", "Português"],
+  },
+  {
+    date: "2026-06-11",
+    cycle: 5,
+    periods: ["Física", "Advisory", "Break", "Projeto", "AP Computer Science", "Almoço", "Inglês"],
+  },
+  {
+    date: "2026-06-12",
+    cycle: 6,
+    periods: ["Português", "Advisory", "Break", "Extra de Ciências", "AP Seminar", "Almoço", "Matemática"],
+  },
+  {
+    date: "2026-06-15",
+    cycle: 1,
+    periods: ["Inglês", "Advisory", "Break", "Francês", "Biologia", "Almoço", "AP Computer Science"],
+  },
+  {
+    date: "2026-06-16",
+    cycle: 2,
+    periods: ["Matemática", "Advisory", "Break", "Educação Física", "Português", "Almoço", "AP Seminar"],
+  },
+  {
+    date: "2026-06-17",
+    cycle: 3,
+    periods: ["AP Computer Science", "Advisory", "Break", "Inglês", "Almoço", "Química"],
+  },
+  {
+    date: "2026-06-18",
+    cycle: 4,
+    periods: ["AP Seminar", "Advisory", "Break", "X Block de quinta", "Matemática", "Almoço", "Português"],
+  },
+  {
+    date: "2026-06-19",
+    cycle: 5,
+    periods: ["Física", "Advisory", "Break", "Extra de Ciências", "AP Computer Science", "Almoço", "Inglês"],
+  },
+  {
+    date: "2026-06-22",
+    cycle: 6,
+    periods: ["Português", "Advisory", "Break", "Projeto", "AP Seminar", "Almoço", "Matemática"],
+  },
+  {
+    date: "2026-06-23",
+    cycle: 1,
+    periods: ["Inglês", "Advisory", "Break", "Extra de Ciências", "Biologia", "Almoço", "AP Computer Science"],
+  },
+  {
+    date: "2026-06-24",
+    cycle: 2,
+    periods: ["Matemática", "Advisory", "Break", "Francês", "Português", "Almoço", "AP Seminar"],
+  },
+  {
+    date: "2026-06-25",
+    cycle: 3,
+    periods: ["AP Computer Science", "Advisory", "Break", "Inglês", "Almoço", "Química"],
+  },
+  // 26/jun (sex), 29/jun (seg), 30/jun (ter) → recesso (JOSE_VACATIONS)
+]
+
+// Recesso escolar (férias). Cada data vira UM VacationEvent — sem
+// rotação de ciclo, sem períodos. Apenas dias úteis dentro do range
+// (sáb/dom já caem fora do calendário escolar).
+export const JOSE_VACATIONS: ReadonlyArray<{ date: string; title: string }> = [
+  { date: "2026-06-26", title: "Recesso escolar" },
+  { date: "2026-06-29", title: "Recesso escolar" },
+  { date: "2026-06-30", title: "Recesso escolar" },
 ]
 
 // Builder: data → SchoolDayEvent[].
@@ -163,6 +276,23 @@ export function buildJoseSchedule(): SchoolDayEvent[] {
   return events
 }
 
+// Builder: gera VacationEvent[] a partir do JOSE_VACATIONS.
+export function buildJoseVacations(): VacationEvent[] {
+  const events: VacationEvent[] = []
+  for (const v of JOSE_VACATIONS) {
+    const [yStr, mStr, dStr] = v.date.split("-")
+    const y = Number(yStr)
+    const m = Number(mStr) - 1
+    const d = Number(dStr)
+    // Sem horário específico — meio-dia evita problemas de fuso.
+    const date = new Date(y, m, d, 12, 0)
+    events.push(
+      new VacationEvent(v.title, date, "Sem aulas — recesso da Concept SP."),
+    )
+  }
+  return events
+}
+
 // Conjunto das datas (em formato YYYY-M-D zero-indexado) que a agenda
 // cobre. Usado para deduplicação ao recarregar.
 export function getJoseScheduleDateKeys(): Set<string> {
@@ -174,5 +304,18 @@ export function getJoseScheduleDateKeys(): Set<string> {
     const d = Number(dStr)
     out.add(`${y}-${m}-${d}`)
   }
+  for (const v of JOSE_VACATIONS) {
+    const [yStr, mStr, dStr] = v.date.split("-")
+    const y = Number(yStr)
+    const m = Number(mStr) - 1
+    const d = Number(dStr)
+    out.add(`${y}-${m}-${d}`)
+  }
   return out
 }
+
+// Limite de navegação do calendário do José: o calendário cobre até
+// junho de 2026 (recesso no fim do mês). Não deixa o usuário avançar
+// pra julho+ porque não há dados de agenda além disso.
+export const JOSE_CALENDAR_MAX_YEAR = 2026
+export const JOSE_CALENDAR_MAX_MONTH = 5 // junho (0-indexed)

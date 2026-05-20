@@ -219,6 +219,34 @@ export class SchoolDayEvent extends CalendarEvent {
 }
 
 // ──────────────────────────────────────────────────────────
+// Férias / recesso escolar
+// ──────────────────────────────────────────────────────────
+// Marca um dia sem aulas — recesso, feriado prolongado, fim de
+// semestre. Não tem períodos nem rotação de ciclo.
+//
+// Unit 9: estende CalendarEvent direto, polimorfismo nas overrides.
+export class VacationEvent extends CalendarEvent {
+  public constructor(
+    title: string,
+    date: Date,
+    description = "",
+    id?: string,
+  ) {
+    super(title, date, description, id)
+  }
+
+  public override getCategory(): EventCategory {
+    return "vacation"
+  }
+  public override getColor(): string {
+    return "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300"
+  }
+  public override getIcon(): string {
+    return "🏖️"
+  }
+}
+
+// ──────────────────────────────────────────────────────────
 // Factory de reidratação (Unit 5 / 9)
 // ──────────────────────────────────────────────────────────
 // Recebe o JSON serializado e devolve a SUBCLASSE correta.
@@ -266,6 +294,8 @@ export function eventFromJSON(raw: SerializedEvent): CalendarEvent {
         raw.id,
       )
     }
+    case "vacation":
+      return new VacationEvent(raw.title, date, raw.description, raw.id)
     default: {
       // Exhaustiveness check: TS reclama em compile time se um novo kind
       // for adicionado sem ser tratado aqui.

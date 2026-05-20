@@ -14,6 +14,7 @@ export {
   ExamEvent,
   AssignmentEvent,
   SchoolDayEvent,
+  VacationEvent,
   eventFromJSON,
   isStudyEvent,
   isExamEvent,
@@ -27,8 +28,12 @@ export { CalendarGrid, type DayCell } from "./CalendarGrid"
 export { EventScheduler } from "./EventScheduler"
 export {
   JOSE_SCHEDULE,
+  JOSE_VACATIONS,
   buildJoseSchedule,
+  buildJoseVacations,
   getJoseScheduleDateKeys,
+  JOSE_CALENDAR_MAX_YEAR,
+  JOSE_CALENDAR_MAX_MONTH,
 } from "./jose-schedule"
 
 // Mapeamento didático: arquivo → unidade do CED.

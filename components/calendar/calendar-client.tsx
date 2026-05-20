@@ -32,7 +32,10 @@ import {
   isAssignmentEvent,
   isSchoolDayEvent,
   buildJoseSchedule,
+  buildJoseVacations,
   getJoseScheduleDateKeys,
+  JOSE_CALENDAR_MAX_YEAR,
+  JOSE_CALENDAR_MAX_MONTH,
   type EventCategory,
   type SerializedEvent,
 } from "@/lib/calendar"
@@ -138,7 +141,14 @@ export function CalendarClient({ userId }: CalendarClientProps) {
     }
   }
 
+  // Trava: a agenda do José termina em junho/2026 (recesso 26-30/jun).
+  // Bloqueia avanço pra meses sem dados.
+  const isAtMaxMonth =
+    year > JOSE_CALENDAR_MAX_YEAR ||
+    (year === JOSE_CALENDAR_MAX_YEAR && month >= JOSE_CALENDAR_MAX_MONTH)
+
   const goNextMonth = () => {
+    if (isAtMaxMonth) return
     if (month === 11) {
       setYear((y) => y + 1)
       setMonth(0)
@@ -202,15 +212,17 @@ export function CalendarClient({ userId }: CalendarClientProps) {
   }
 
   // Carrega a agenda da persona José.
-  // Idempotente: remove qualquer SchoolDayEvent existente nas datas
-  // cobertas, depois adiciona os novos. Re-clicar não duplica.
+  // Idempotente: remove qualquer SchoolDayEvent OU VacationEvent
+  // existente nas datas cobertas, depois adiciona os novos. Re-clicar
+  // não duplica.
   const handleLoadJoseSchedule = () => {
     const targetDates = getJoseScheduleDateKeys()
     // Unit 4: traverse reverso para remover seguro durante iteração.
     const arr = list.toArray()
     for (let i = arr.length - 1; i >= 0; i--) {
       const ev = arr[i]
-      if (ev.getCategory() !== "school_day") continue
+      const cat = ev.getCategory()
+      if (cat !== "school_day" && cat !== "vacation") continue
       const d = ev.getDate()
       const key = EventScheduler.dayKey(
         d.getFullYear(),
@@ -220,6 +232,7 @@ export function CalendarClient({ userId }: CalendarClientProps) {
       if (targetDates.has(key)) list.removeById(ev.getId())
     }
     for (const ev of buildJoseSchedule()) list.add(ev)
+    for (const ev of buildJoseVacations()) list.add(ev)
     // Pula o cursor para o mês da agenda (maio/2026).
     setYear(2026)
     setMonth(4) // maio = índice 4
@@ -266,6 +279,12 @@ export function CalendarClient({ userId }: CalendarClientProps) {
                   size="icon"
                   onClick={goNextMonth}
                   aria-label="Próximo mês"
+                  disabled={isAtMaxMonth}
+                  title={
+                    isAtMaxMonth
+                      ? "A agenda termina em junho/2026."
+                      : "Próximo mês"
+                  }
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
