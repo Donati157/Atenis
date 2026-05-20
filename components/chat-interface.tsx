@@ -246,7 +246,7 @@ interface ChatInterfaceProps {
   subSubject: SubSubjectId | null
   examPrep: ExamPrepId | null
   corrector: CorrectorId | null
-  chatKey: number
+  chatKey: string
   threadId: string | null
   vanillaMode: boolean
   onThreadCreated?: (id: string) => void
@@ -321,7 +321,7 @@ export function ChatInterface({
   )
 
   const { messages, setMessages, sendMessage, status } = useChat({
-    id: String(chatKey),
+    id: chatKey,
     transport,
   })
 

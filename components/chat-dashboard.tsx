@@ -77,7 +77,19 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
   const [subSubject, setSubSubject] = useState<SubSubjectId | null>(null)
   const [examPrep, setExamPrep] = useState<ExamPrepId | null>(null)
   const [corrector, setCorrector] = useState<CorrectorId | null>(null)
-  const [chatKey, setChatKey] = useState(0)
+  // chatKey é UUID novo a cada "Nova conversa" ou troca de matéria/prep/
+  // corretor. UUID (em vez de int incremental) evita colisão com
+  // localStorage de sessões anteriores que poderia ressuscitar mensagens
+  // de uma chave reusada.
+  const [chatKey, setChatKey] = useState<string>(() =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : String(Date.now()),
+  )
+  const newChatKey = () =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : String(Date.now())
   const [threadId, setThreadId] = useState<string | null>(null)
   const [vanillaMode, setVanillaMode] = useState(false)
   const [threads, setThreads] = useState<
@@ -110,25 +122,37 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
 
   const openThread = useCallback((id: string) => {
     setThreadId(id)
-    setChatKey((k) => k + 1)
+    setChatKey(newChatKey())
     setSidebarOpen(false)
   }, [])
 
   const deleteThread = useCallback(
     async (id: string) => {
-      if (!window.confirm("Apagar essa conversa? Não dá pra desfazer.")) return
+      // Update otimista: remove da lista imediatamente. Se o DELETE falhar,
+      // recoloca tudo via refreshThreads. Sem window.confirm pra não ser
+      // silenciosamente bloqueado em mobile/iPad.
+      const previous = threads
+      setThreads((cur) => cur.filter((t) => t.id !== id))
+      if (threadId === id) {
+        setThreadId(null)
+        setChatKey(newChatKey())
+      }
       try {
-        await fetch(`/api/threads/${id}`, { method: "DELETE" })
-        if (threadId === id) {
-          setThreadId(null)
-          setChatKey((k) => k + 1)
+        const res = await fetch(`/api/threads/${id}`, { method: "DELETE" })
+        if (!res.ok) {
+          console.error(
+            "deleteThread: backend retornou",
+            res.status,
+            await res.text().catch(() => ""),
+          )
+          setThreads(previous) // rollback
         }
-        refreshThreads()
-      } catch {
-        // silencioso
+      } catch (err) {
+        console.error("deleteThread: fetch falhou", err)
+        setThreads(previous) // rollback
       }
     },
-    [threadId, refreshThreads],
+    [threadId, threads],
   )
   const router = useRouter()
   const pathname = usePathname()
@@ -144,7 +168,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setExamPrep(null)
     setCorrector(null)
     setThreadId(null)
-    setChatKey((k) => k + 1)
+    setChatKey(newChatKey())
     setSidebarOpen(false)
     if (pathname !== "/dashboard") router.push("/dashboard")
   }
@@ -162,14 +186,14 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setExamPrep(null)
     setCorrector(null)
     setThreadId(null)
-    setChatKey((k) => k + 1)
+    setChatKey(newChatKey())
     setSidebarOpen(false)
   }
 
   const selectSubSubject = (id: SubSubjectId) => {
     setSubSubject((cur) => (cur === id ? null : id))
     setThreadId(null)
-    setChatKey((k) => k + 1)
+    setChatKey(newChatKey())
     setSidebarOpen(false)
   }
 
@@ -179,7 +203,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setSubSubject(null)
     setCorrector(null)
     setThreadId(null)
-    setChatKey((k) => k + 1)
+    setChatKey(newChatKey())
     setSidebarOpen(false)
   }
 
@@ -189,7 +213,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     setSubSubject(null)
     setExamPrep(null)
     setThreadId(null)
-    setChatKey((k) => k + 1)
+    setChatKey(newChatKey())
     setSidebarOpen(false)
   }
 
@@ -209,7 +233,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
       }
     }
     setThreadId(null)
-    setChatKey((k) => k + 1)
+    setChatKey(newChatKey())
     setSidebarOpen(false)
   }
 
