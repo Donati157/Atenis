@@ -474,7 +474,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
                         </button>
                         <button
                           onClick={() => deleteThread(t.id)}
-                          className="opacity-0 group-hover:opacity-100 px-2 py-1 text-muted-foreground hover:text-destructive transition-opacity"
+                          className="px-2 py-1 text-muted-foreground/60 hover:text-destructive transition-colors"
                           aria-label="Apagar conversa"
                           title="Apagar conversa"
                         >
