@@ -42,6 +42,7 @@ import {
   Trash2,
   Sparkles,
   Globe,
+  Brain,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -91,9 +92,13 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
       ? crypto.randomUUID()
       : String(Date.now())
   const [threadId, setThreadId] = useState<string | null>(null)
+  const [seedPrompt, setSeedPrompt] = useState<string | null>(null)
   const [vanillaMode, setVanillaMode] = useState(false)
   const [threads, setThreads] = useState<
     Array<{ id: string; title: string; subject: string | null; exam_prep: string | null; updated_at: string }>
+  >([])
+  const [dueTopics, setDueTopics] = useState<
+    Array<{ id: string; subject: string; topic: string; mastery: number }>
   >([])
 
   // Carrega lista de threads do usuário pra mostrar na sidebar.
@@ -108,9 +113,22 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
     }
   }, [])
 
+  // Carrega tópicos vencidos pra revisão (memória acadêmica / spaced rep).
+  const refreshDueTopics = useCallback(async () => {
+    try {
+      const res = await fetch("/api/mastery?due=1")
+      if (!res.ok) return
+      const json = (await res.json()) as { topics: typeof dueTopics }
+      setDueTopics(json.topics ?? [])
+    } catch {
+      // silencioso
+    }
+  }, [])
+
   useEffect(() => {
     refreshThreads()
-  }, [refreshThreads])
+    refreshDueTopics()
+  }, [refreshThreads, refreshDueTopics])
 
   const handleThreadCreated = useCallback(
     (id: string) => {
@@ -122,6 +140,15 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
 
   const openThread = useCallback((id: string) => {
     setThreadId(id)
+    setChatKey(newChatKey())
+    setSidebarOpen(false)
+  }, [])
+
+  // Clicar num tópico de revisão abre uma conversa nova já com o pedido
+  // de revisão pronto pra enviar. seedPrompt é consumido pelo ChatInterface.
+  const reviewTopic = useCallback((subject: string, topic: string) => {
+    setThreadId(null)
+    setSeedPrompt(`Me revisa ${topic} (${subject}) — quero relembrar antes de seguir.`)
     setChatKey(newChatKey())
     setSidebarOpen(false)
   }, [])
@@ -466,6 +493,40 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
               </div>
             </div>
 
+            {dueTopics.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-accent mb-2 px-1 flex items-center gap-1.5">
+                  <Brain className="h-3 w-3" />
+                  Revisar hoje
+                </h3>
+                <div className="space-y-1">
+                  {dueTopics.slice(0, 5).map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => reviewTopic(t.subject, t.topic)}
+                      className="w-full text-left px-3 py-2 rounded-lg transition-colors hover:bg-accent/10 group"
+                      title={`Domínio atual: ${t.mastery}% — clique pra revisar`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-foreground/90 truncate capitalize">
+                          {t.topic}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {t.mastery}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1 w-full rounded-full bg-secondary/60 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-accent/70 transition-all"
+                          style={{ width: `${t.mastery}%` }}
+                        />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mb-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1 flex items-center gap-1.5">
                 <MessageSquare className="h-3 w-3" />
@@ -641,6 +702,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
               corrector={corrector}
               chatKey={chatKey}
               threadId={threadId}
+              seedPrompt={seedPrompt}
               vanillaMode={vanillaMode}
               onThreadCreated={handleThreadCreated}
               userName={profile?.full_name || undefined}

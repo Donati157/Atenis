@@ -248,6 +248,7 @@ interface ChatInterfaceProps {
   corrector: CorrectorId | null
   chatKey: string
   threadId: string | null
+  seedPrompt?: string | null
   vanillaMode: boolean
   onThreadCreated?: (id: string) => void
   userName?: string
@@ -262,6 +263,7 @@ export function ChatInterface({
   corrector,
   chatKey,
   threadId,
+  seedPrompt,
   vanillaMode,
   onThreadCreated,
   userName,
@@ -296,6 +298,19 @@ export function ChatInterface({
   const dragCounterRef = useRef(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // seedPrompt: quando o aluno clica num tópico de "Revisar hoje", o pai
+  // remonta o chat (chatKey novo) com esse prompt. Preenche o input uma
+  // vez pra ele só apertar enviar.
+  const seededRef = useRef(false)
+  useEffect(() => {
+    if (seededRef.current) return
+    if (seedPrompt && seedPrompt.trim()) {
+      setInput(seedPrompt)
+      seededRef.current = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedPrompt])
 
   const transport = useMemo(
     () =>

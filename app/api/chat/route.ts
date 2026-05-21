@@ -1,4 +1,12 @@
-import { consumeStream, convertToModelMessages, streamText, type UIMessage } from "ai"
+import {
+  consumeStream,
+  convertToModelMessages,
+  streamText,
+  tool,
+  stepCountIs,
+  type UIMessage,
+} from "ai"
+import { z } from "zod"
 import { google } from "@ai-sdk/google"
 import {
   SUBJECT_PROMPTS,
@@ -12,6 +20,7 @@ import {
 } from "@/lib/subjects"
 import { VOICE_PROMPT } from "@/lib/voice"
 import { TEACHING_METHODS_PROMPT } from "@/lib/teaching-methods"
+import { applyAttempt } from "@/lib/spaced-repetition"
 import { createClient } from "@/lib/supabase/server"
 
 const GRADE_LABELS: Record<string, string> = {
@@ -327,6 +336,63 @@ Não jogue isso na cara dele logo de cara; só puxe se a conversa atual conectar
 ${lines.join("\n")}`
 }
 
+// Memória v2 (reativação): traz os tópicos que estão "vencidos" pra
+// revisão segundo o spaced repetition. A IA usa pra propor revisão
+// estratégica — "faz uma semana que você estudou crase e errou; bora
+// dar uma revisada rápida?".
+async function dueTopicsSummary(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("topic_mastery")
+    .select("subject, topic, box, last_seen")
+    .eq("user_id", userId)
+    .lte("next_review", new Date().toISOString())
+    .order("next_review", { ascending: true })
+    .limit(6)
+  if (error || !data || data.length === 0) return ""
+
+  const lines = data.map((t) => {
+    const days = Math.max(
+      0,
+      Math.round(
+        (Date.now() - new Date(t.last_seen as string).getTime()) /
+          86_400_000,
+      ),
+    )
+    const quando = days === 0 ? "hoje" : days === 1 ? "ontem" : `há ${days} dias`
+    const nivel = t.box <= 2 ? "ainda frágil" : "razoável, mas vale reforçar"
+    return `- ${t.topic} (${t.subject}) — visto ${quando}, domínio ${nivel}`
+  })
+
+  return `## REVISÃO PENDENTE (memória acadêmica do aluno)
+Estes tópicos já foram estudados e, segundo a repetição espaçada, estão na
+hora de revisar. Se a conversa der brecha (ou se o aluno não tiver um pedido
+específico), proponha uma revisão RÁPIDA de um deles — sem ser chato. Não
+liste todos de uma vez; escolha o mais relevante pro contexto.
+
+${lines.join("\n")}`
+}
+
+// Schema da tool de coleta de domínio. A IA chama quando avalia que o
+// aluno demonstrou (ou não) domínio de um tópico específico.
+const recordMasterySchema = z.object({
+  subject: z
+    .string()
+    .describe("Matéria do tópico, ex: 'Matemática', 'Química', 'Português'."),
+  topic: z
+    .string()
+    .describe(
+      "Tópico específico avaliado, ex: 'função quadrática', 'crase', 'estequiometria', 'conversão decimal-binário'.",
+    ),
+  correct: z
+    .boolean()
+    .describe(
+      "true se o aluno demonstrou domínio do tópico (acertou / explicou bem); false se errou ou demonstrou que ainda não domina.",
+    ),
+})
+
 export async function POST(req: Request) {
   const {
     messages,
@@ -426,6 +492,8 @@ export async function POST(req: Request) {
     if (userId) {
       const mem = await recentThreadsSummary(supabase, userId, threadId)
       if (mem) systemParts.push(mem)
+      const due = await dueTopicsSummary(supabase, userId)
+      if (due) systemParts.push(due)
     }
     if (subject && SUBJECT_PROMPTS[subject]) systemParts.push(SUBJECT_PROMPTS[subject])
     if (subSubject && SUB_SUBJECT_PROMPTS[subSubject]) {
@@ -435,14 +503,71 @@ export async function POST(req: Request) {
     if (corrector && CORRECTOR_PROMPTS[corrector]) systemParts.push(CORRECTOR_PROMPTS[corrector])
   }
 
+  // Tool de coleta de domínio (memória acadêmica). Só faz sentido com
+  // o aluno logado e fora do modo vanilla. A IA chama quando avalia
+  // domínio de um tópico no Tutor de Prova / Exercícios; o resultado
+  // alimenta o spaced repetition (tabela topic_mastery).
+  const masteryTool = tool({
+    description:
+      "Registra o domínio do aluno num tópico específico, pra alimentar o sistema de revisão espaçada. Chame SEMPRE que, no Tutor de Prova ou em Exercícios, o aluno demonstrar que domina (acertou/explicou bem) ou que ainda NÃO domina (errou) um tópico concreto. Não chame em conversa solta ou explicação simples — só quando houve avaliação real de domínio.",
+    inputSchema: recordMasterySchema,
+    execute: async ({ subject: subj, topic, correct }) => {
+      if (!userId) return { ok: false }
+      try {
+        const { data: existing } = await supabase
+          .from("topic_mastery")
+          .select("box, times_seen, times_correct")
+          .eq("user_id", userId)
+          .eq("subject", subj.trim().slice(0, 80))
+          .eq("topic", topic.trim().slice(0, 120))
+          .maybeSingle()
+        const next = applyAttempt(
+          existing
+            ? {
+                box: existing.box as number,
+                timesSeen: existing.times_seen as number,
+                timesCorrect: existing.times_correct as number,
+              }
+            : null,
+          correct,
+        )
+        await supabase.from("topic_mastery").upsert(
+          {
+            user_id: userId,
+            subject: subj.trim().slice(0, 80),
+            topic: topic.trim().slice(0, 120),
+            box: next.box,
+            times_seen: next.timesSeen,
+            times_correct: next.timesCorrect,
+            last_seen: next.lastSeen.toISOString(),
+            next_review: next.nextReview.toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,subject,topic" },
+        )
+        return { ok: true, box: next.box }
+      } catch {
+        return { ok: false }
+      }
+    },
+  })
+
   const result = streamText({
     model: google("gemini-2.5-flash-lite"),
     // google_search é o tool nativo do Gemini que faz busca no Google —
     // dá pro Atenis citar fatos atualizados, links e imagens da web.
     // Nome do tool DEVE ser "google_search" (requisito do provider).
-    tools: {
-      google_search: google.tools.googleSearch({}),
-    },
+    // record_mastery alimenta a memória acadêmica (só fora do vanilla
+    // e com aluno logado).
+    tools:
+      vanillaMode || !userId
+        ? { google_search: google.tools.googleSearch({}) }
+        : {
+            google_search: google.tools.googleSearch({}),
+            record_mastery: masteryTool,
+          },
+    // Permite a IA chamar a tool e continuar a resposta no mesmo turno.
+    stopWhen: stepCountIs(4),
     system: systemParts.join("\n\n"),
     messages: await convertToModelMessages(messages),
     abortSignal: req.signal,
