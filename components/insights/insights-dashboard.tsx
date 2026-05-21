@@ -5,10 +5,31 @@ import type { LearningEventRow } from "@/lib/learning-events"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { TrendingUp, AlertCircle, CheckCircle2, Calendar, Target } from "lucide-react"
+import {
+  TrendingUp,
+  AlertCircle,
+  CheckCircle2,
+  Calendar,
+  Target,
+  Brain,
+  Clock,
+  Flame,
+} from "lucide-react"
+
+export interface MasteryRow {
+  id: string
+  subject: string
+  topic: string
+  box: number
+  times_seen: number
+  times_correct: number
+  last_seen: string
+  next_review: string
+}
 
 interface Props {
   events: LearningEventRow[]
+  mastery?: MasteryRow[]
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -17,34 +38,105 @@ function withinDays(iso: string, days: number): boolean {
   return Date.now() - new Date(iso).getTime() <= days * DAY_MS
 }
 
-export function InsightsDashboard({ events }: Props) {
+export function InsightsDashboard({ events, mastery = [] }: Props) {
   const stats = useMemo(() => computeStats(events), [events])
+  const mem = useMemo(() => computeMastery(mastery), [mastery])
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <MetricCard
-          icon={<Target className="h-5 w-5" />}
-          label="Eventos nos últimos 7 dias"
-          value={stats.eventsLast7}
+          icon={<Brain className="h-5 w-5" />}
+          label="Tópicos na sua memória"
+          value={mem.total}
           accent
         />
         <MetricCard
           icon={<CheckCircle2 className="h-5 w-5 text-green-400" />}
-          label="Acertos na semana"
-          value={stats.correctLast7}
+          label="Tópicos dominados"
+          value={mem.mastered}
         />
         <MetricCard
-          icon={<AlertCircle className="h-5 w-5 text-yellow-400" />}
-          label="Erros na semana"
-          value={stats.wrongLast7}
+          icon={<Flame className="h-5 w-5 text-yellow-400" />}
+          label="Conceitos frágeis"
+          value={mem.fragile}
         />
         <MetricCard
-          icon={<Calendar className="h-5 w-5 text-primary" />}
-          label="Dias de estudo na semana"
-          value={stats.distinctDaysLast7}
+          icon={<Clock className="h-5 w-5 text-primary" />}
+          label="Pra revisar hoje"
+          value={mem.due}
         />
       </div>
+
+      {/* Memória acadêmica — mapa de domínio por tópico (spaced repetition) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Brain className="h-5 w-5 text-accent" />
+            Sua memória acadêmica
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {mem.topics.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Conforme você estuda no Tutor de Prova e nos Exercícios, o Atenis vai mapeando
+              o quanto você domina cada tópico — e te lembra de revisar na hora certa.
+            </p>
+          ) : (
+            <>
+              {mem.dueTopics.length > 0 && (
+                <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
+                  <p className="text-sm font-medium text-accent mb-2 flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    Na hora de revisar
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {mem.dueTopics.map((t) => (
+                      <span
+                        key={t.id}
+                        className="text-xs rounded-full border border-accent/40 bg-background/60 px-2.5 py-1 capitalize"
+                        title={`${t.subject} · domínio ${t.pct}%`}
+                      >
+                        {t.topic}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {mem.weakening.length > 0 && (
+                <div className="space-y-2">
+                  {mem.weakening.map((t) => (
+                    <p
+                      key={t.id}
+                      className="text-sm text-foreground/90 flex items-center gap-2"
+                    >
+                      <Flame className="h-4 w-4 text-yellow-400 shrink-0" />
+                      Você já errou <strong>{t.wrong}×</strong> em{" "}
+                      <span className="capitalize text-yellow-400">{t.topic}</span> — esse
+                      conceito ainda está enfraquecendo.
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-3 pt-1">
+                {mem.topics.map((t) => (
+                  <div key={t.id} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium capitalize">{t.topic}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {t.subject} · {t.pct}%
+                      </span>
+                    </div>
+                    <Progress value={t.pct} className="h-2" />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {stats.wrongLast7 > 0 && (
         <Card className="border-yellow-500/40 bg-yellow-500/5">
@@ -200,6 +292,43 @@ function formatWhen(iso: string): string {
   if (diffMin < 60) return `${Math.round(diffMin)} min atrás`
   if (diffMin < 1440) return `${Math.round(diffMin / 60)}h atrás`
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+}
+
+function computeMastery(mastery: MasteryRow[]) {
+  const now = Date.now()
+  const pctOf = (box: number) => Math.round((Math.max(1, Math.min(5, box)) / 5) * 100)
+
+  const topics = mastery
+    .map((m) => ({
+      id: m.id,
+      subject: m.subject,
+      topic: m.topic,
+      box: m.box,
+      pct: pctOf(m.box),
+      wrong: Math.max(0, (m.times_seen ?? 0) - (m.times_correct ?? 0)),
+      due: new Date(m.next_review).getTime() <= now,
+    }))
+    // Mostra primeiro os mais frágeis (menor domínio).
+    .sort((a, b) => a.pct - b.pct)
+
+  const dueTopics = topics.filter((t) => t.due).slice(0, 12)
+
+  // "Enfraquecendo" = já foi visto várias vezes mas o domínio ainda é
+  // baixo (caixa 1-2) e errou 2+ vezes. Sinaliza concept que não fixa.
+  const weakening = topics
+    .filter((t) => t.box <= 2 && t.wrong >= 2)
+    .sort((a, b) => b.wrong - a.wrong)
+    .slice(0, 4)
+
+  return {
+    total: topics.length,
+    mastered: topics.filter((t) => t.box >= 5).length,
+    fragile: topics.filter((t) => t.box <= 2).length,
+    due: topics.filter((t) => t.due).length,
+    topics: topics.slice(0, 20),
+    dueTopics,
+    weakening,
+  }
 }
 
 function computeStats(events: LearningEventRow[]) {

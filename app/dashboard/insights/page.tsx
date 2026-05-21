@@ -3,7 +3,7 @@ import Image from "next/image"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
-import { InsightsDashboard } from "@/components/insights/insights-dashboard"
+import { InsightsDashboard, type MasteryRow } from "@/components/insights/insights-dashboard"
 import type { LearningEventRow } from "@/lib/learning-events"
 import { ArrowLeft, TrendingUp } from "lucide-react"
 
@@ -23,6 +23,17 @@ export default async function InsightsPage() {
     .limit(500)
 
   const list: LearningEventRow[] = (events as LearningEventRow[] | null) ?? []
+
+  // Memória acadêmica (spaced repetition). Defensivo: se a migration 025
+  // ainda não rodou, a query falha e seguimos sem o mapa de domínio.
+  const { data: masteryData } = await supabase
+    .from("topic_mastery")
+    .select("id, subject, topic, box, times_seen, times_correct, last_seen, next_review")
+    .eq("user_id", user.id)
+    .order("next_review", { ascending: true })
+    .limit(200)
+
+  const mastery = (masteryData as MasteryRow[] | null) ?? []
 
   return (
     <div className="min-h-screen bg-background">
@@ -61,7 +72,8 @@ export default async function InsightsPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold font-display">Insights</h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1">
-              Acompanhe seus erros, acertos e evolução por matéria.
+              Sua memória acadêmica: o que você domina, o que está enfraquecendo e o que
+              revisar hoje.
             </p>
           </div>
 
@@ -72,7 +84,7 @@ export default async function InsightsPage() {
               Supabase.
             </div>
           ) : (
-            <InsightsDashboard events={list} />
+            <InsightsDashboard events={list} mastery={mastery} />
           )}
         </div>
       </div>
