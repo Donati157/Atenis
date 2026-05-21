@@ -139,6 +139,23 @@ const demoQuadratica: Array<
   },
 ]
 
+// Comparação lado a lado: mesma pergunta, IA comum vs Modo Atenis.
+// É o elemento que mostra o diferencial de forma visceral — "qualquer
+// um usa GPT; o difícil é o comportamento pedagógico".
+const comparison = {
+  question: "como resolvo x² − 5x + 6 = 0?",
+  vanilla: {
+    label: "IA comum",
+    text: "É só aplicar Bhaskara: x = (5 ± √(25 − 24)) / 2 = (5 ± 1) / 2. Logo, x = 3 ou x = 2. Pronto!",
+    note: "Te dá a resposta. Você copia. Na prova, trava.",
+  },
+  atenis: {
+    label: "Modo Atenis",
+    text: "Antes de eu resolver — me diz quanto valem a, b e c nessa equação. (Dica: a é o número que multiplica o x².) Quero ver você montar a fórmula; aí a gente resolve junto.",
+    note: "Te faz pensar. Você aprende. Na prova, acerta sozinho.",
+  },
+}
+
 type Msg = (typeof demoBinario)[number]
 
 function ChatBubbles({
@@ -299,6 +316,69 @@ export default function LandingPage() {
               </Card>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Comparação: IA comum vs Modo Atenis — mesma pergunta */}
+      <section className="py-20 md:py-28 border-t border-border/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12 md:mb-14 max-w-3xl mx-auto">
+            <p className="text-sm font-medium uppercase tracking-widest text-accent mb-3">
+              A diferença na prática
+            </p>
+            <h2 className="text-3xl md:text-5xl font-bold mb-5 text-balance font-display tracking-tight">
+              Mesma pergunta. <span className="text-accent">Respostas opostas.</span>
+            </h2>
+            <p className="text-muted-foreground text-lg md:text-xl text-pretty">
+              Um aluno pergunta:{" "}
+              <span className="text-foreground/90 font-medium">
+                &ldquo;{comparison.question}&rdquo;
+              </span>
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-5 max-w-5xl mx-auto items-stretch">
+            {/* IA comum */}
+            <div className="rounded-2xl border border-border/60 bg-card/30 p-6 flex flex-col">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-bold">
+                  AI
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  {comparison.vanilla.label}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground/80 flex-1">
+                {comparison.vanilla.text}
+              </p>
+              <p className="mt-4 pt-4 border-t border-border/40 text-xs text-muted-foreground">
+                {comparison.vanilla.note}
+              </p>
+            </div>
+
+            {/* Modo Atenis */}
+            <div className="rounded-2xl border border-accent/40 bg-accent/5 p-6 flex flex-col shadow-lg shadow-accent/5">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30">
+                  <Sparkles className="h-3.5 w-3.5" />
+                </span>
+                <span className="text-sm font-semibold text-accent">
+                  {comparison.atenis.label}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground/90 flex-1">
+                {comparison.atenis.text}
+              </p>
+              <p className="mt-4 pt-4 border-t border-accent/20 text-xs text-accent/90 font-medium">
+                {comparison.atenis.note}
+              </p>
+            </div>
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground mt-8 max-w-xl mx-auto text-pretty">
+            Qualquer um tem acesso a uma IA que responde. O difícil — e o que muda sua
+            nota — é uma IA que <strong className="text-foreground/90">te faz aprender</strong>.
+          </p>
         </div>
       </section>
 
