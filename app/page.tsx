@@ -52,12 +52,12 @@ const collaborators = [
     description: "Responsável pela arquitetura e tecnologia do projeto.",
   },
   {
-    name: "Jose Leonardo Abarca",
+    name: "Jose Leonardo Neyra Abarca",
     role: "Diretor de Marketing e Business",
     description: "Responsável por crescimento e estratégia de negócios.",
   },
   {
-    name: "Walter Neto",
+    name: "Walter Dias Santana Neto",
     role: "Diretor da Equipe de Support",
     description: "Responsável pelo suporte e satisfação dos estudantes.",
   },
@@ -537,7 +537,7 @@ export default function LandingPage() {
           />
           <p className="text-sm text-muted-foreground text-center">
             © {new Date().getFullYear()} Atenis. Criado por Davi Donati, Jose Leonardo
-            Abarca e Walter Neto.
+            Neyra Abarca e Walter Dias Santana Neto.
           </p>
         </div>
       </footer>
