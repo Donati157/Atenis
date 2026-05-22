@@ -41,10 +41,40 @@ import {
   MessageSquare,
   Trash2,
   Sparkles,
-  Globe,
   Brain,
+  Zap,
+  Trophy,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+// Os 3 modos do Atenis. "atenis" é o coração do produto (default).
+export type ChatMode = "fast" | "atenis" | "prova"
+
+const MODES: Array<{
+  id: ChatMode
+  label: string
+  icon: typeof Zap
+  title: string
+}> = [
+  {
+    id: "fast",
+    label: "Rápido",
+    icon: Zap,
+    title: "Modo Rápido: resposta direta e objetiva, como uma IA comum. Pra dúvida rápida ou consulta.",
+  },
+  {
+    id: "atenis",
+    label: "Atenis",
+    icon: Sparkles,
+    title: "Modo Atenis: o jeito que o Atenis realmente ensina — perguntas, correção, progressão e avaliação. O coração do produto.",
+  },
+  {
+    id: "prova",
+    label: "Prova",
+    icon: Trophy,
+    title: "Modo Prova: foco em performance acadêmica — estilo ENEM/AP, análise de erro rigorosa e pressão de prova.",
+  },
+]
 
 interface ChatDashboardProps {
   user: User
@@ -93,7 +123,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
       : String(Date.now())
   const [threadId, setThreadId] = useState<string | null>(null)
   const [seedPrompt, setSeedPrompt] = useState<string | null>(null)
-  const [vanillaMode, setVanillaMode] = useState(false)
+  const [mode, setMode] = useState<ChatMode>("atenis")
   const [threads, setThreads] = useState<
     Array<{ id: string; title: string; subject: string | null; exam_prep: string | null; updated_at: string }>
   >([])
@@ -318,43 +348,34 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
             </button>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Toggle Modo Atenis ↔ Modo Normal */}
-            <Button
-              variant={vanillaMode ? "outline" : "default"}
-              size="sm"
-              className="hidden md:inline-flex"
-              onClick={() => setVanillaMode((v) => !v)}
-              title={
-                vanillaMode
-                  ? "Modo Normal: IA genérica, sem o método Atenis. Clique pra voltar ao Atenis."
-                  : "Modo Atenis: tutor completo (5 habilidades de ensino + voz + currículo). Clique pra ver como uma IA genérica responderia."
-              }
+            {/* Seletor de modo: ⚡ Rápido · 🧠 Atenis · 🏆 Prova */}
+            <div
+              className="inline-flex items-center rounded-lg border border-border/60 bg-card/50 p-0.5"
+              role="group"
+              aria-label="Modo de estudo"
             >
-              {vanillaMode ? (
-                <Globe className="h-4 w-4" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
-              {vanillaMode ? "Modo Normal" : "Modo Atenis"}
-            </Button>
-            <Button
-              variant={vanillaMode ? "outline" : "default"}
-              size="icon"
-              className="md:hidden"
-              onClick={() => setVanillaMode((v) => !v)}
-              aria-label={
-                vanillaMode
-                  ? "Mudar pra Modo Atenis"
-                  : "Mudar pra Modo Normal"
-              }
-              title={vanillaMode ? "Modo Normal" : "Modo Atenis"}
-            >
-              {vanillaMode ? (
-                <Globe className="h-4 w-4" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
-            </Button>
+              {MODES.map((m) => {
+                const Icon = m.icon
+                const active = mode === m.id
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setMode(m.id)}
+                    title={m.title}
+                    aria-pressed={active}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-2 sm:px-2.5 py-1.5 text-xs font-medium transition-colors",
+                      active
+                        ? "bg-accent text-accent-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="hidden md:inline">{m.label}</span>
+                  </button>
+                )
+              })}
+            </div>
 
             {/* Nova conversa: texto em sm+, só ícone em mobile */}
             <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={newChat}>
@@ -703,7 +724,7 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
               chatKey={chatKey}
               threadId={threadId}
               seedPrompt={seedPrompt}
-              vanillaMode={vanillaMode}
+              mode={mode}
               onThreadCreated={handleThreadCreated}
               userName={profile?.full_name || undefined}
               userEmail={user.email}

@@ -249,7 +249,7 @@ interface ChatInterfaceProps {
   chatKey: string
   threadId: string | null
   seedPrompt?: string | null
-  vanillaMode: boolean
+  mode: "fast" | "atenis" | "prova"
   onThreadCreated?: (id: string) => void
   userName?: string
   userEmail?: string | null
@@ -264,7 +264,7 @@ export function ChatInterface({
   chatKey,
   threadId,
   seedPrompt,
-  vanillaMode,
+  mode,
   onThreadCreated,
   userName,
   userEmail,
@@ -322,7 +322,7 @@ export function ChatInterface({
           examPrep,
           corrector,
           threadId: effectiveThreadId,
-          vanillaMode,
+          mode,
         },
       }),
     [
@@ -331,7 +331,7 @@ export function ChatInterface({
       examPrep,
       corrector,
       effectiveThreadId,
-      vanillaMode,
+      mode,
     ],
   )
 
@@ -601,7 +601,7 @@ export function ChatInterface({
           </div>
         </div>
       )}
-      {(mainBadge || vanillaMode) && (
+      {(mainBadge || mode !== "atenis") && (
         <div className="flex justify-center gap-2 flex-wrap border-b border-border/50 bg-card/30 py-2 px-4">
           {mainBadge && (
             <span className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/60 px-3 py-1 text-xs text-muted-foreground">
@@ -613,9 +613,14 @@ export function ChatInterface({
               {mainBadge.text}
             </span>
           )}
-          {vanillaMode && (
+          {mode === "fast" && (
             <span className="inline-flex items-center gap-2 rounded-full border border-muted-foreground/50 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-              🌐 Modo Normal (IA genérica)
+              ⚡ Modo Rápido (resposta direta)
+            </span>
+          )}
+          {mode === "prova" && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/10 px-3 py-1 text-xs text-accent font-medium">
+              🏆 Modo Prova (foco em performance)
             </span>
           )}
         </div>

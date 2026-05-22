@@ -19,7 +19,7 @@ import {
   type SubSubjectId,
 } from "@/lib/subjects"
 import { VOICE_PROMPT } from "@/lib/voice"
-import { TEACHING_METHODS_PROMPT } from "@/lib/teaching-methods"
+import { TEACHING_METHODS_PROMPT, PROVA_MODE_PROMPT } from "@/lib/teaching-methods"
 import { applyAttempt } from "@/lib/spaced-repetition"
 import { createClient } from "@/lib/supabase/server"
 
@@ -291,6 +291,12 @@ ANTES — o que ele acabou de digitar é o que ele quer AGORA.
 
 Você é amigável, paciente e dedicado ao sucesso educacional dos estudantes.`
 
+// Os 3 modos do Atenis:
+//  - "fast"   ⚡ Rápido  → resposta direta, sem persona (IA comum)
+//  - "atenis" 🧠 Atenis  → ensino adaptativo completo (default)
+//  - "prova"  🏆 Prova   → foco em performance acadêmica (Atenis + Modo Prova)
+type ChatMode = "fast" | "atenis" | "prova"
+
 interface ChatRequestBody {
   messages: UIMessage[]
   subject?: SubjectId | null
@@ -298,9 +304,8 @@ interface ChatRequestBody {
   examPrep?: ExamPrepId | null
   corrector?: CorrectorId | null
   threadId?: string | null
-  // Quando true, a IA responde "como qualquer assistente genérico" — sem
-  // a voz Atenis, sem as 5 habilidades de ensino, sem currículo. Útil pra
-  // o aluno comparar "IA padrão" vs "tutor Atenis".
+  mode?: ChatMode
+  // Compat: clientes antigos podem mandar vanillaMode. true ≡ mode "fast".
   vanillaMode?: boolean
 }
 
@@ -401,8 +406,13 @@ export async function POST(req: Request) {
     examPrep,
     corrector,
     threadId: incomingThreadId,
+    mode: incomingMode,
     vanillaMode,
   }: ChatRequestBody = await req.json()
+
+  // Resolve o modo (com compat pro vanillaMode antigo).
+  const mode: ChatMode = incomingMode ?? (vanillaMode ? "fast" : "atenis")
+  const isFast = mode === "fast"
 
   const supabase = await createClient()
 
@@ -472,11 +482,11 @@ export async function POST(req: Request) {
     }
   }
 
-  // Em modo "Normal" (vanilla), pula TODAS as camadas Atenis (persona,
+  // Modo ⚡ Rápido (fast): pula TODAS as camadas Atenis (persona,
   // habilidades, série, currículo, matéria, memória) e usa só um system
-  // prompt minimalista — assim o aluno consegue comparar como uma IA
-  // genérica responde vs como o Atenis responde.
-  const systemParts: string[] = vanillaMode
+  // prompt minimalista — resposta direta, igual IA comum.
+  // Modos 🧠 Atenis e 🏆 Prova: stack pedagógico completo.
+  const systemParts: string[] = isFast
     ? [VANILLA_SYSTEM]
     : [
         // Ordem das camadas Atenis: BASE (missão, fontes) → VOZ (persona,
@@ -488,7 +498,9 @@ export async function POST(req: Request) {
         gradeContextPrompt(gradeLevel, fullName),
         TEACHING_METHODS_PROMPT,
       ]
-  if (!vanillaMode) {
+  if (!isFast) {
+    // Modo Prova: força o foco de performance em cima do stack Atenis.
+    if (mode === "prova") systemParts.push(PROVA_MODE_PROMPT)
     if (userId) {
       const mem = await recentThreadsSummary(supabase, userId, threadId)
       if (mem) systemParts.push(mem)
@@ -560,7 +572,7 @@ export async function POST(req: Request) {
     // record_mastery alimenta a memória acadêmica (só fora do vanilla
     // e com aluno logado).
     tools:
-      vanillaMode || !userId
+      isFast || !userId
         ? { google_search: google.tools.googleSearch({}) }
         : {
             google_search: google.tools.googleSearch({}),
