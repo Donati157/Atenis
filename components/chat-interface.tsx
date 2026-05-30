@@ -481,7 +481,10 @@ export function ChatInterface({
     e?.preventDefault()
     if ((!input.trim() && attachments.length === 0) || isLoading) return
 
-    const fileParts =
+    // Monta parts explicitamente em vez de usar sendMessage({ text, files })
+    // — esse atalho do SDK às vezes só envia o 1º arquivo quando vem array.
+    // Com parts explícitos garantimos que TODOS os anexos vão.
+    const filePartsData =
       attachments.length > 0
         ? await Promise.all(
             attachments.map(async (a) => ({
@@ -491,12 +494,20 @@ export function ChatInterface({
               filename: a.file.name,
             })),
           )
-        : undefined
+        : []
+
+    const textPart = {
+      type: "text" as const,
+      text: input || (attachments.length > 0 ? "(arquivos anexados)" : ""),
+    }
 
     sendMessage({
-      text: input || "(arquivo anexado)",
-      files: fileParts,
+      role: "user",
+      parts: [textPart, ...filePartsData],
     })
+
+    // Variável legada usada no log analytics abaixo — mantém formato.
+    const fileParts = filePartsData.length > 0 ? filePartsData : undefined
 
     // Fire-and-forget analytics log
     void (async () => {
