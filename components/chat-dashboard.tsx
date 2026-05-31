@@ -42,31 +42,28 @@ import {
   Trash2,
   Sparkles,
   Brain,
-  Zap,
   Trophy,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Os 3 modos do Atenis. "atenis" é o coração do produto (default).
+// Os 3 modos suportados no backend. O frontend só expõe seletor pra
+// super-admin (Método/Prova). Aluno comum fica sempre em "atenis".
+// "fast" segue suportado pra eventual reativação futura, mas hoje não
+// aparece no UI.
 export type ChatMode = "fast" | "atenis" | "prova"
 
-const MODES: Array<{
+// Modos visíveis no seletor (só super-admin enxerga esse seletor).
+const ADMIN_MODES: Array<{
   id: ChatMode
   label: string
-  icon: typeof Zap
+  icon: typeof Sparkles
   title: string
 }> = [
   {
-    id: "fast",
-    label: "Rápido",
-    icon: Zap,
-    title: "Modo Rápido: resposta direta e objetiva, como uma IA comum. Pra dúvida rápida ou consulta.",
-  },
-  {
     id: "atenis",
-    label: "Atenis",
+    label: "Método",
     icon: Sparkles,
-    title: "Modo Atenis: o jeito que o Atenis realmente ensina — perguntas, correção, progressão e avaliação. O coração do produto.",
+    title: "Método Atenis: aluno define um objetivo (qualquer um), IA faz diagnóstica ativa e conduz aprendizado adaptativo.",
   },
   {
     id: "prova",
@@ -348,34 +345,37 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
             </button>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Seletor de modo: ⚡ Rápido · 🧠 Atenis · 🏆 Prova */}
-            <div
-              className="inline-flex items-center rounded-lg border border-border/60 bg-card/50 p-0.5"
-              role="group"
-              aria-label="Modo de estudo"
-            >
-              {MODES.map((m) => {
-                const Icon = m.icon
-                const active = mode === m.id
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => setMode(m.id)}
-                    title={m.title}
-                    aria-pressed={active}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-md px-2 sm:px-2.5 py-1.5 text-xs font-medium transition-colors",
-                      active
-                        ? "bg-accent text-accent-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="hidden md:inline">{m.label}</span>
-                  </button>
-                )
-              })}
-            </div>
+            {/* Seletor de modo: SÓ super-admin vê. Aluno comum fica
+                sempre em "atenis" (Modo Atenis padrão). */}
+            {isSuperAdmin(user.id) && (
+              <div
+                className="inline-flex items-center rounded-lg border border-border/60 bg-card/50 p-0.5"
+                role="group"
+                aria-label="Modo"
+              >
+                {ADMIN_MODES.map((m) => {
+                  const Icon = m.icon
+                  const active = mode === m.id
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setMode(m.id)}
+                      title={m.title}
+                      aria-pressed={active}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md px-2 sm:px-2.5 py-1.5 text-xs font-medium transition-colors",
+                        active
+                          ? "bg-accent text-accent-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      <span className="hidden md:inline">{m.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
 
             {/* Nova conversa: texto em sm+, só ícone em mobile */}
             <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={newChat}>
