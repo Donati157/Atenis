@@ -231,8 +231,10 @@ export function TutorHome({ userName, userEmail, userRole }: Props) {
           Ou escolha uma matéria, preparação ou correção no menu lateral ↖
         </p>
         <p className="text-xs text-muted-foreground">
-          💡 <strong>Dica:</strong> ative o <span className="text-accent">Modo Socrático</span> no
-          topo pra aprender tentando, em vez de só ler respostas.
+          💡 <strong>Dica:</strong> conte um objetivo concreto (ex: &ldquo;quero
+          falar inglês com meu neto&rdquo; ou &ldquo;tenho prova de função
+          quadrática quinta&rdquo;) — quanto mais específico, melhor o Atenis
+          calibra o que você precisa.
         </p>
       </div>
     </div>

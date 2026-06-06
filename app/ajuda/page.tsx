@@ -243,35 +243,41 @@ const SECTIONS: FaqSection[] = [
         a: (
           <>
             <p>
-              A IA do Atenis tem 5 habilidades de ensino e escolhe sozinha qual
-              usar, baseado no que você pede no chat — não precisa selecionar
-              "modo" em lugar nenhum.
+              A IA do Atenis funciona como um tutor de verdade: ela escuta seu
+              objetivo, pede que você <strong>demonstre</strong> o que já sabe
+              (com uma pequena tarefa, não com pergunta vaga), e a partir daí
+              calibra o que precisa ensinar. Tudo no chat — sem precisar
+              selecionar &ldquo;modo&rdquo; em lugar nenhum.
             </p>
             <ul className="list-disc pl-5 space-y-1.5 mt-3">
               <li>
-                <strong>📚 Explicar</strong> — "me explica X", "o que é Y", "como
-                funciona Z". Conteúdo do zero com analogia e exemplo prático.
+                <strong>📚 Explicar</strong> — &ldquo;me explica X&rdquo;,
+                &ldquo;o que é Y&rdquo;. Conteúdo do zero com analogia e
+                exemplo concreto. Curto, sem manual técnico.
               </li>
               <li>
-                <strong>🧠 Revisar</strong> — "me revisa X", "resumo de Y", "pontos
-                que mais caem em Z". Resumo + mini-quiz + pegadinhas.
+                <strong>🧠 Revisar</strong> — &ldquo;me revisa X&rdquo;,
+                &ldquo;pontos que mais caem em Y&rdquo;. Resumo enxuto +
+                mini-quiz + pegadinhas comuns.
               </li>
               <li>
-                <strong>📝 Exercícios</strong> — "me dá uma questão de X", "quero
-                treinar Y". Uma questão por vez, com correção passo a passo. A
-                IA espera você tentar antes de dar a resposta (técnica socrática).
+                <strong>📝 Exercícios</strong> — &ldquo;me dá uma questão de
+                X&rdquo;, &ldquo;quero treinar Y&rdquo;. Uma questão por vez,
+                com correção passo a passo. A IA espera você tentar antes de
+                dar a resposta.
               </li>
               <li>
-                <strong>🎯 Simulado</strong> — "monte um simulado de X", "5
-                questões de Y", "simulado ENEM/Fuvest/AP". Bloco completo, sem
-                gabarito até você entregar.
+                <strong>🎯 Simulado</strong> — &ldquo;monte um simulado de
+                X&rdquo;, &ldquo;simulado ENEM/Fuvest/AP&rdquo;. Bloco
+                completo de questões, sem gabarito até você entregar.
               </li>
               <li>
-                <strong>🧑‍🏫 Tutor de Prova</strong> — "tenho prova de X", "perdi
-                aulas de Y", "me prepara pra tirar 100". Jornada completa: de
-                "perdi aulas" até "tiro 100" com avaliação contínua em
+                <strong>🧑‍🏫 Tutor de Prova</strong> — &ldquo;tenho prova de X
+                quinta&rdquo;, &ldquo;perdi aulas&rdquo;, &ldquo;me prepara pra
+                tirar 100&rdquo;. Jornada completa do &ldquo;perdi
+                aulas&rdquo; até &ldquo;estou pronto&rdquo; com avaliação em
                 porcentagem a cada turno, análise de erro, reflexão escrita e
-                correção da prova no final.
+                correção da prova final.
               </li>
             </ul>
             <p className="mt-3">
