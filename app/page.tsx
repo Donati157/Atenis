@@ -42,24 +42,14 @@ const modoAtenis = [
 
 const collaborators = [
   {
-    name: "Escola Concept São Paulo",
-    role: "Parceiro Educacional",
-    description: "Parceria para fornecer conteúdo educacional de qualidade.",
-  },
-  {
     name: "Davi Donati",
     role: "CTO e Fundador",
-    description: "Responsável pela arquitetura e tecnologia do projeto.",
+    description: "Responsável pela arquitetura, tecnologia e direção do produto.",
   },
   {
-    name: "Jose Leonardo Neyra Abarca",
-    role: "Diretor de Marketing e Business",
-    description: "Responsável por crescimento e estratégia de negócios.",
-  },
-  {
-    name: "Walter Dias Santana Neto",
-    role: "Diretor da Equipe de Support",
-    description: "Responsável pelo suporte e satisfação dos estudantes.",
+    name: "Escola Concept São Paulo",
+    role: "Parceiro Educacional",
+    description: "Parceria pedagógica — currículo, alunos-piloto e validação do método.",
   },
 ]
 
@@ -536,8 +526,8 @@ export default function LandingPage() {
             className="rounded-full opacity-80 ring-1 ring-border/50"
           />
           <p className="text-sm text-muted-foreground text-center">
-            © {new Date().getFullYear()} Atenis. Criado por Davi Donati, Jose Leonardo
-            Neyra Abarca e Walter Dias Santana Neto.
+            © {new Date().getFullYear()} Atenis. Criado por Davi Donati em parceria
+            com a Escola Concept São Paulo.
           </p>
         </div>
       </footer>
