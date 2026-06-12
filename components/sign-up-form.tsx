@@ -6,7 +6,15 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, GraduationCap, Briefcase, ArrowLeft, Compass } from "lucide-react"
+import {
+  Loader2,
+  GraduationCap,
+  Briefcase,
+  ArrowLeft,
+  Compass,
+  School,
+  Globe2,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TeachingPicker } from "@/components/teaching-picker"
 import { Input } from "@/components/ui/input"
@@ -20,12 +28,14 @@ import {
 import { LEADERSHIP_EMAIL_DOMAIN } from "@/lib/roles"
 
 type Role = "student" | "professor" | "leadership"
-type Step = "role" | "form"
+type School = "concept" | "other"
+type Step = "school" | "role" | "form"
 
 const SIGNUP_INTENT_KEY = "atenis.signupIntent"
 
 export function SignUpForm() {
-  const [step, setStep] = useState<Step>("role")
+  const [step, setStep] = useState<Step>("school")
+  const [school, setSchool] = useState<School>("concept")
   const [role, setRole] = useState<Role>("student")
 
   const [gradeLevel, setGradeLevel] = useState<string>("")
@@ -33,6 +43,17 @@ export function SignUpForm() {
   const [leadershipTitle, setLeadershipTitle] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const pickSchool = (s: School) => {
+    setSchool(s)
+    setStep("role")
+    setError(null)
+  }
+
+  const goBackToSchool = () => {
+    setStep("school")
+    setError(null)
+  }
 
   const pickRole = (r: Role) => {
     setRole(r)
@@ -96,14 +117,133 @@ export function SignUpForm() {
     }
   }
 
-  if (step === "role") {
+  if (step === "school") {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Criar conta</CardTitle>
           <CardDescription>
-            Pra começar, me conta: qual seu papel na Atenis?
+            De qual escola você é?
           </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => pickSchool("concept")}
+              className="group flex flex-col items-center gap-2 rounded-xl border border-input bg-card/50 hover:bg-accent/10 hover:border-accent/50 transition-colors p-5 text-center"
+            >
+              <div className="h-12 w-12 rounded-full bg-accent/15 text-accent flex items-center justify-center">
+                <School className="h-6 w-6" />
+              </div>
+              <span className="font-semibold text-base">Escola Concept</span>
+              <span className="text-xs text-muted-foreground">
+                Sou aluno, professor ou liderança da Escola Concept São Paulo.
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => pickSchool("other")}
+              className="group flex flex-col items-center gap-2 rounded-xl border border-input bg-card/50 hover:bg-accent/10 hover:border-accent/50 transition-colors p-5 text-center"
+            >
+              <div className="h-12 w-12 rounded-full bg-muted text-muted-foreground flex items-center justify-center">
+                <Globe2 className="h-6 w-6" />
+              </div>
+              <span className="font-semibold text-base">Outro</span>
+              <span className="text-xs text-muted-foreground">
+                Sou de outra escola ou estou explorando o Atenis por conta própria.
+              </span>
+            </button>
+          </div>
+
+          <p className="text-sm text-muted-foreground text-center mt-6">
+            Já tem uma conta?{" "}
+            <Link href="/auth/login" className="text-accent underline-offset-4 hover:underline">
+              Entrar
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (step === "role") {
+    // Caminho "Outro": no momento o Atenis atende só a Concept SP — mostra
+    // mensagem amigável em vez do seletor de papel.
+    if (school === "other") {
+      return (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={goBackToSchool}
+                aria-label="Voltar"
+                className="-ml-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <CardTitle className="text-2xl">Em breve pra outras escolas</CardTitle>
+                <CardDescription>
+                  Estamos rodando o piloto do Atenis com a Escola Concept São
+                  Paulo. Em breve abriremos pra outras escolas e alunos
+                  individuais.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-foreground/80 mb-4">
+              Se você é da equipe da Concept ou foi convidado pra testar,
+              clica em &ldquo;Voltar&rdquo; e seleciona{" "}
+              <strong>Escola Concept</strong>. Se quer ser avisado quando o
+              Atenis estiver disponível pra mais gente, escreve pra gente em{" "}
+              <a
+                href="mailto:contato@atenis.com.br"
+                className="text-accent hover:underline"
+              >
+                contato@atenis.com.br
+              </a>
+              .
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={goBackToSchool}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Button>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={goBackToSchool}
+              aria-label="Voltar"
+              className="-ml-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <CardTitle className="text-2xl">Criar conta</CardTitle>
+              <CardDescription>
+                Pra começar, me conta: qual seu papel na Concept?
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
