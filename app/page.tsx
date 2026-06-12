@@ -468,7 +468,7 @@ export default function LandingPage() {
             <p className="text-muted-foreground mb-12 max-w-2xl mx-auto">
               Construindo um sistema de aprendizado com IA, em parceria com escola brasileira.
             </p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto justify-items-center">
               {collaborators.map((c) => (
                 <Card
                   key={c.name}
