@@ -511,10 +511,12 @@ export function SignUpForm() {
             </span>
           </button>
 
-          <p className="text-xs text-muted-foreground text-center">
-            Recomendado: use seu e-mail Google da escola (ex:{" "}
-            <code>@conceptedu.com.br</code>).
-          </p>
+          {school === "concept" && (
+            <p className="text-xs text-muted-foreground text-center">
+              Recomendado: use seu e-mail Google da escola (ex:{" "}
+              <code>@conceptedu.com.br</code>).
+            </p>
+          )}
 
           <p className="text-sm text-muted-foreground text-center mt-2">
             Já tem uma conta?{" "}
