@@ -41,12 +41,24 @@ export function SignUpForm() {
   const [gradeLevel, setGradeLevel] = useState<string>("")
   const [teachingAssignments, setTeachingAssignments] = useState<TeachingAssignments>({})
   const [leadershipTitle, setLeadershipTitle] = useState<string>("")
+  // Pra usuários de fora da Concept (caminho "Outro"): nome e telefone
+  // são obrigatórios; concept usa o nome do Google.
+  const [otherFullName, setOtherFullName] = useState<string>("")
+  const [otherPhone, setOtherPhone] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const pickSchool = (s: School) => {
     setSchool(s)
-    setStep("role")
+    // Caminho "Outro": pula a tela de seleção de papel e vai direto
+    // pro form (role fixo = student). Caminho Concept: continua pro
+    // seletor de papel.
+    if (s === "other") {
+      setRole("student")
+      setStep("form")
+    } else {
+      setStep("role")
+    }
     setError(null)
   }
 
@@ -71,30 +83,57 @@ export function SignUpForm() {
   const continueWithGoogle = async () => {
     setError(null)
 
-    if (role === "student" && !gradeLevel) {
-      setError("Selecione sua série antes de continuar.")
-      return
-    }
-    if (role === "professor" && totalAssignments === 0) {
-      setError("Selecione pelo menos uma matéria em alguma série.")
-      return
-    }
-    if (role === "leadership" && !leadershipTitle.trim()) {
-      setError("Diga seu cargo de liderança (ex: Diretora, Coordenadora, Mentora).")
-      return
+    // Validações por caminho:
+    if (school === "other") {
+      if (!otherFullName.trim()) {
+        setError("Diga seu nome completo.")
+        return
+      }
+      if (!otherPhone.trim() || otherPhone.replace(/\D/g, "").length < 8) {
+        setError("Diga seu telefone (com DDD).")
+        return
+      }
+    } else {
+      if (role === "student" && !gradeLevel) {
+        setError("Selecione sua série antes de continuar.")
+        return
+      }
+      if (role === "professor" && totalAssignments === 0) {
+        setError("Selecione pelo menos uma matéria em alguma série.")
+        return
+      }
+      if (role === "leadership" && !leadershipTitle.trim()) {
+        setError("Diga seu cargo de liderança (ex: Diretora, Coordenadora, Mentora).")
+        return
+      }
     }
 
     const clean =
       role === "professor" ? cleanAssignments(teachingAssignments) : {}
 
-    const intent = {
-      role,
-      grade_level: role === "student" ? gradeLevel : null,
-      teaching_grades: role === "professor" ? Object.keys(clean) : null,
-      teaching_natural_sub: null,
-      teaching_assignments: role === "professor" ? clean : null,
-      leadership_title: role === "leadership" ? leadershipTitle.trim() : null,
-    }
+    const intent =
+      school === "other"
+        ? {
+            role: "student" as const,
+            school: "other" as const,
+            full_name: otherFullName.trim(),
+            phone: otherPhone.trim(),
+            grade_level: gradeLevel || null,
+            teaching_grades: null,
+            teaching_natural_sub: null,
+            teaching_assignments: null,
+            leadership_title: null,
+          }
+        : {
+            role,
+            school: "concept" as const,
+            grade_level: role === "student" ? gradeLevel : null,
+            teaching_grades: role === "professor" ? Object.keys(clean) : null,
+            teaching_natural_sub: null,
+            teaching_assignments: role === "professor" ? clean : null,
+            leadership_title:
+              role === "leadership" ? leadershipTitle.trim() : null,
+          }
 
     try {
       window.localStorage.setItem(SIGNUP_INTENT_KEY, JSON.stringify(intent))
@@ -308,7 +347,7 @@ export function SignUpForm() {
             type="button"
             variant="ghost"
             size="icon"
-            onClick={goBackToRole}
+            onClick={school === "other" ? goBackToSchool : goBackToRole}
             disabled={loading}
             aria-label="Voltar"
             className="-ml-2"
@@ -317,18 +356,22 @@ export function SignUpForm() {
           </Button>
           <div>
             <CardTitle className="text-2xl">
-              {role === "student"
-                ? "Conta de Estudante"
-                : role === "professor"
-                  ? "Conta de Professor"
-                  : "Conta de Liderança"}
+              {school === "other"
+                ? "Criar conta"
+                : role === "student"
+                  ? "Conta de Estudante"
+                  : role === "professor"
+                    ? "Conta de Professor"
+                    : "Conta de Liderança"}
             </CardTitle>
             <CardDescription>
-              {role === "student" &&
+              {school === "other" &&
+                "Preencha seu nome e telefone e entre com sua conta Google."}
+              {school === "concept" && role === "student" &&
                 "Diga sua série e entre com sua conta Google."}
-              {role === "professor" &&
+              {school === "concept" && role === "professor" &&
                 "Diga quais séries você leciona e entre com sua conta Google."}
-              {role === "leadership" &&
+              {school === "concept" && role === "leadership" &&
                 `Diga seu cargo e entre com sua conta Google ${LEADERSHIP_EMAIL_DOMAIN}.`}
             </CardDescription>
           </div>
@@ -336,7 +379,61 @@ export function SignUpForm() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4">
-          {role === "student" && (
+          {school === "other" && (
+            <>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="other_name">Nome completo</Label>
+                <Input
+                  id="other_name"
+                  placeholder="Seu nome completo"
+                  value={otherFullName}
+                  onChange={(e) => setOtherFullName(e.target.value)}
+                  disabled={loading}
+                  required
+                  maxLength={120}
+                  autoComplete="name"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="other_phone">Telefone</Label>
+                <Input
+                  id="other_phone"
+                  type="tel"
+                  placeholder="(11) 91234-5678"
+                  value={otherPhone}
+                  onChange={(e) => setOtherPhone(e.target.value)}
+                  disabled={loading}
+                  required
+                  maxLength={20}
+                  autoComplete="tel"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="other_grade">
+                  Sua série{" "}
+                  <span className="text-xs text-muted-foreground font-normal">
+                    (opcional)
+                  </span>
+                </Label>
+                <select
+                  id="other_grade"
+                  value={gradeLevel}
+                  onChange={(e) => setGradeLevel(e.target.value)}
+                  disabled={loading}
+                  className={cn(SELECT_CLASS, !gradeLevel && "text-muted-foreground")}
+                >
+                  <option value="">— Selecione (opcional) —</option>
+                  {GRADE_LEVELS.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
+          {school === "concept" && role === "student" && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="grade">Sua série</Label>
               <select
@@ -359,7 +456,7 @@ export function SignUpForm() {
             </div>
           )}
 
-          {role === "professor" && (
+          {school === "concept" && role === "professor" && (
             <TeachingPicker
               assignments={teachingAssignments}
               onChange={setTeachingAssignments}
@@ -367,7 +464,7 @@ export function SignUpForm() {
             />
           )}
 
-          {role === "leadership" && (
+          {school === "concept" && role === "leadership" && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="leadership_title">Seu cargo de liderança</Label>
               <Input

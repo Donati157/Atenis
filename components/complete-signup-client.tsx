@@ -23,7 +23,9 @@ type IntentRole = "student" | "professor" | "leadership"
 
 interface SignupIntent {
   role: IntentRole
+  school?: "concept" | "other" | null
   full_name?: string | null
+  phone?: string | null
   grade_level?: string | null
   teaching_grades?: string[] | null
   teaching_natural_sub?: string[] | null
@@ -68,7 +70,19 @@ export function CompleteSignupClient() {
       p_teaching_assignments: intent.teaching_assignments ?? null,
       p_leadership_title: intent.leadership_title ?? null,
     })
-    return error?.message ?? null
+    if (error) return error.message
+    // Phone fica fora do RPC porque a coluna foi adicionada depois
+    // (migration 026). Atualiza separadamente quando vier no intent.
+    if (intent.phone) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase
+          .from("profiles")
+          .update({ phone: intent.phone })
+          .eq("id", user.id)
+      }
+    }
+    return null
   }
 
   useEffect(() => {
