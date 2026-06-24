@@ -20,6 +20,7 @@ export function LoginForm() {
   const searchParams = useSearchParams()
   const next = searchParams.get("next") || "/dashboard"
   const justSignedUp = searchParams.get("signup") === "ok"
+  const sessionReset = searchParams.get("reset") === "1"
 
   useEffect(() => {
     const supabase = createClient()
@@ -60,6 +61,15 @@ export function LoginForm() {
             <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
             <p className="text-foreground/90">
               Sua conta foi criada. Faça login pra continuar.
+            </p>
+          </div>
+        )}
+
+        {sessionReset && !justSignedUp && (
+          <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            <p className="text-foreground/90">
+              Tua sessão expirou ou estava com problema — a gente já zerou
+              os cookies do site nesse dispositivo. Entra de novo abaixo.
             </p>
           </div>
         )}
