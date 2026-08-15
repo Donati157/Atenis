@@ -7,10 +7,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:vnext": "vitest run test/vnext",
+    "test:coverage": "vitest run --coverage",
+    "test:smoke:vercel-gateway": "ATENIS_SMOKE_ENABLED=true ATENIS_PROVIDER_DIAGNOSTIC=true node --env-file=.env.local ./node_modules/.bin/vitest run --config vitest.smoke.config.ts test/vnext/smoke-real/vercel-gateway.smoke.test.ts",
+    "test:smoke:openai": "ATENIS_SMOKE_ENABLED=true ATENIS_PROVIDER_DIAGNOSTIC=true node --env-file=.env.local ./node_modules/.bin/vitest run --config vitest.smoke.config.ts test/vnext/smoke-real/openai.smoke.test.ts",
+    "test:smoke:openai-streaming": "ATENIS_SMOKE_ENABLED=true ATENIS_PROVIDER_DIAGNOSTIC=true node --env-file=.env.local ./node_modules/.bin/vitest run --config vitest.smoke.config.ts test/vnext/smoke-real/openai-streaming.smoke.test.ts",
+    "test:smoke:runtime-openai": "ATENIS_SMOKE_ENABLED=true ATENIS_PROVIDER_DIAGNOSTIC=true node --env-file=.env.local ./node_modules/.bin/vitest run --config vitest.smoke.config.ts test/vnext/smoke-real/runtime-openai.smoke.test.ts"
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.70",
+    "@ai-sdk/openai": "^2.0.118",
     "@ai-sdk/react": "^2.0.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-label": "^2.1.7",
@@ -38,11 +46,13 @@
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
+    "@vitest/coverage-v8": "^2.1.9",
     "autoprefixer": "^10.4.20",
     "pg": "^8.20.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
   }
 }

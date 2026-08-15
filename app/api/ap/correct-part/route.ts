@@ -1,5 +1,5 @@
 import { generateObject } from "ai"
-import { google } from "@ai-sdk/google"
+import { openai } from "@ai-sdk/openai"
 import { z } from "zod"
 import { getRubricById } from "@/lib/ap-rubric"
 import { getCourseById } from "@/lib/ap-courses"
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const partDescription = partDescriptions[part] ?? partDescriptions.custom
 
     const { object } = await generateObject({
-      model: google("gemini-2.5-flash-lite"),
+      model: openai("gpt-4o-mini"),
       schema: correctionSchema,
       messages: [
         {

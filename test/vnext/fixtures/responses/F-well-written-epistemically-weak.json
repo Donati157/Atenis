@@ -1,0 +1,49 @@
+{
+  "primaryTakeaway": "Aquecimento global é resultado principalmente da queima de combustíveis fósseis.",
+  "nextStep": "Compara com uma fonte oficial (IPCC ou MCTI) e vê se bate.",
+  "sources": [
+    {
+      "id": "src-blog-anon",
+      "type": "web",
+      "title": "Blog Meio Ambiente HOJE (autor anônimo)",
+      "authorityTier": "web-unknown",
+      "retrievedAt": "2026-08-01T00:00:00Z"
+    }
+  ],
+  "evidences": [
+    {
+      "id": "ev-forte-fraca",
+      "text": "O aquecimento global se deve principalmente à queima de combustíveis fósseis, que libera CO2 na atmosfera desde a Revolução Industrial.",
+      "sourceId": "src-blog-anon",
+      "supportStrength": "strong",
+      "quotationExact": true
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-fato",
+      "text": "O aquecimento global é causado principalmente pela queima de combustíveis fósseis.",
+      "type": "fact",
+      "assertionLevel": "asserted",
+      "evidenceIds": ["ev-forte-fraca"]
+    }
+  ],
+  "analyses": [
+    {
+      "id": "a-boa",
+      "claimId": "c-fato",
+      "evidenceIds": ["ev-forte-fraca"],
+      "text": "O texto está bem escrito e o argumento parece plausível pra um leitor casual, mas apoia-se numa única fonte sem autoridade estabelecida. Sem uma fonte primária como o IPCC ou INPE, o Claim não deveria ser afirmado com esse grau de segurança.",
+      "inferences": [],
+      "counterarguments": [],
+      "uncertainty": ["Fonte única de autoridade desconhecida."]
+    }
+  ],
+  "reviews": [],
+  "detectedConflicts": [],
+  "meta": {
+    "generatedAt": "2026-08-11T14:30:00Z",
+    "modelName": "mock-v1",
+    "turnId": "turn-fixture-F"
+  }
+}

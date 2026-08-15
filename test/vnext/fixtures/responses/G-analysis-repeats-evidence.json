@@ -1,0 +1,49 @@
+{
+  "primaryTakeaway": "A célula eucariótica tem núcleo definido, diferente da procariótica.",
+  "nextStep": "Desenha uma célula eucariótica e identifica o núcleo.",
+  "sources": [
+    {
+      "id": "src-bio",
+      "type": "textbook",
+      "title": "Biologia Geral — Amabis & Martho (PNLD)",
+      "authorityTier": "textbook",
+      "retrievedAt": "2026-08-01T00:00:00Z"
+    }
+  ],
+  "evidences": [
+    {
+      "id": "ev-cel",
+      "text": "A célula eucariótica possui núcleo definido delimitado por membrana nuclear, enquanto a célula procariótica não possui núcleo delimitado por membrana.",
+      "sourceId": "src-bio",
+      "supportStrength": "strong",
+      "quotationExact": true
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-cel",
+      "text": "A célula eucariótica tem núcleo definido; a procariótica não.",
+      "type": "definition",
+      "assertionLevel": "asserted",
+      "evidenceIds": ["ev-cel"]
+    }
+  ],
+  "analyses": [
+    {
+      "id": "a-repete",
+      "claimId": "c-cel",
+      "evidenceIds": ["ev-cel"],
+      "text": "A célula eucariótica possui núcleo definido delimitado por membrana nuclear, enquanto a célula procariótica não possui núcleo delimitado por membrana.",
+      "inferences": [],
+      "counterarguments": [],
+      "uncertainty": []
+    }
+  ],
+  "reviews": [],
+  "detectedConflicts": [],
+  "meta": {
+    "generatedAt": "2026-08-11T14:30:00Z",
+    "modelName": "mock-v1",
+    "turnId": "turn-fixture-G"
+  }
+}

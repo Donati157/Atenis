@@ -62,7 +62,7 @@ Termos brasileiros e específicos do projeto que aparecem em todo lugar:
 - **Linguagem:** TypeScript 5.7 end-to-end
 - **Estilização:** Tailwind CSS 3.4 + shadcn/ui (primitives Radix)
 - **Banco / Auth / Storage:** Supabase (Postgres + RLS, `@supabase/ssr`)
-- **IA:** Vercel AI SDK 5 + Google Gemini 2.5 Flash Lite (`@ai-sdk/google`)
+- **IA:** Vercel AI SDK 5 + OpenAI `gpt-4o-mini` (`@ai-sdk/openai`)
 - **Markdown:** `react-markdown` + `remark-gfm` + `remark-breaks`
 - **Hospedagem:** Vercel (build + CI a partir do Git)
 - **Sub-app experimental** em [`corretor de rubricas/`](corretor%20de%20rubricas/): Next 16 + OpenAI, ainda não integrado.
@@ -109,7 +109,7 @@ Isso significa que a mesma pergunta ("explica equação do segundo grau") gera r
     │   → prep de exame → corretor → modo de estudo)
     │
     ▼  streamText (Vercel AI SDK 5)
-[Google Gemini 2.5 Flash Lite]
+[OpenAI gpt-4o-mini]
     │  resposta em streaming
     ▼
 [useChat no front] → UI com tokens chegando em tempo real
@@ -121,7 +121,7 @@ Isso significa que a mesma pergunta ("explica equação do segundo grau") gera r
 2. Route handler `/api/chat` recebe `{messages, subject, subSubject, examPrep, corrector, studyMode, activeLearning}`.
 3. Busca `grade_level` e `full_name` em `profiles` via Supabase server client.
 4. Concatena os 7 fragmentos do system prompt (ver seção 7).
-5. Chama `streamText({ model: google("gemini-2.5-flash-lite"), system, messages })`.
+5. Chama `streamText({ model: openai("gpt-4o-mini"), system, messages })`.
 6. Retorna `result.toUIMessageStreamResponse()` — stream chega no `useChat` como tokens.
 
 Persistência (perfil, planos de estudo, eventos de aprendizado, atribuições) é toda em Supabase com RLS isolando dados por usuário.
@@ -234,7 +234,7 @@ app/
 │   ├── students/[id]/             # Gestão de aluno
 │   └── teachers/[id]/             # Gestão de professor
 └── api/
-    ├── chat/route.ts              # Streaming Gemini + system prompt em camadas
+    ├── chat/route.ts              # Streaming OpenAI + system prompt em camadas
     ├── enem/analyze/              # Correção ENEM (5 competências × 200pts)
     ├── ap/{analyze,correct-part}/ # Correção AP College Board
     ├── gcd/{analyze,correct-part}/# Correção ensaio GCD
@@ -379,7 +379,7 @@ Agrupadas por área:
 **Tutor (chat)**
 - Sidebar com matérias, sub-matérias, prep, corretor, modo de estudo, Active Learning
 - System prompt em 7 camadas (ver seção 7)
-- Streaming de tokens via Vercel AI SDK 5 + Gemini 2.5 Flash Lite
+- Streaming de tokens via Vercel AI SDK 5 + OpenAI `gpt-4o-mini`
 
 **Corretores** (componentes dedicados, não passam pelo `/api/chat`)
 - ENEM Redação: 5 competências × 200 pts ([app/api/enem/analyze/route.ts](app/api/enem/analyze/route.ts))
@@ -424,13 +424,13 @@ Receitas curtas pra operações comuns. Siga em ordem; cada passo é verificáve
 
 ### Mudar modelo de IA
 
-Editar [app/api/chat/route.ts:244](app/api/chat/route.ts):
+Editar [app/api/chat/route.ts](app/api/chat/route.ts) e as demais rotas em `app/api/*/route.ts`:
 
 ```ts
-model: google("gemini-2.5-flash-lite"),
+model: openai("gpt-4o-mini"),
 ```
 
-Se trocar provider (ex: voltar pra OpenAI), atualizar import e adicionar dep em `package.json`. Conferir `AI_GATEWAY_API_KEY` no `.env.local` e nas env vars da Vercel.
+Todas as 7 rotas (`chat`, `enem/analyze`, `ap/{analyze,correct-part}`, `gcd/{analyze,correct-part}`, `study-plan/generate`) usam `@ai-sdk/openai` direto. Se trocar provider, atualizar import + `package.json` + `OPENAI_API_KEY` no `.env.local` e nas env vars da Vercel.
 
 ### Adicionar série/grade
 
@@ -455,7 +455,7 @@ Padrão de [app/api/study-plan/generate/route.ts](app/api/study-plan/generate/ro
 2. Auth check via createClient() do server
 3. Buscar profile pra contexto se precisar
 4. Montar system prompt (idealmente reusando lib/)
-5. Chamar streamText({ model: google("gemini-2.5-flash-lite"), system, messages })
+5. Chamar streamText({ model: openai("gpt-4o-mini"), system, messages })
 6. return result.toUIMessageStreamResponse()
 7. export const maxDuration = 30
 ```
@@ -486,10 +486,10 @@ Ver [scripts/016_hide_staff_from_gestao.sql](scripts/016_hide_staff_from_gestao.
 
 Em ordem de prioridade:
 
-1. **Alto — `/api/chat` sem rate limit nem auth gate forte.** Gemini Flash Lite é mais barato que GPT-5, mas o endpoint ainda fica vulnerável a abuso. Adicionar Upstash rate limit + checagem de sessão obrigatória antes do `streamText`.
+1. **Alto — `/api/chat` sem rate limit nem auth gate forte.** OpenAI `gpt-4o-mini` é barato, mas o endpoint ainda fica vulnerável a abuso. Adicionar Upstash rate limit + checagem de sessão obrigatória antes do `streamText`.
 2. **Alto — Sem testes automatizados.** Não há Vitest/Playwright. Considerar smoke tests pelo menos nos corretores ENEM/AP/GCD — regressão silenciosa em rubrica é caríssima.
-3. **Alto — Sem observabilidade.** Sem Sentry/LogRocket nem logs estruturados. Em produção, falha do Gemini ou do Supabase é invisível.
-4. **Médio — Sub-app `corretor de rubricas/` desalinhado.** Usa OpenAI (não Gemini), Next 16 (não 15.2), prompt próprio. Decidir: integrar como módulo ou descontinuar.
+3. **Alto — Sem observabilidade.** Sem Sentry/LogRocket nem logs estruturados. Em produção, falha da OpenAI ou do Supabase é invisível.
+4. **Médio — Sub-app `corretor de rubricas/` desalinhado.** Usa Next 16 (não 15.2) e prompt próprio; embora também baseado em OpenAI, não compartilha o adapter/gateway do app principal. Decidir: integrar como módulo ou descontinuar.
 5. **Médio — Gamificação só como scaffolding.** [lib/learning-events.ts](lib/learning-events.ts) existe mas XP/streak/níveis não estão vivos. Risco de o time decidir adicionar ad-hoc — vale alinhar antes (BNCC + Concept SP em primeiro lugar, sempre).
 
 **Resolvidos** (manter no histórico):
@@ -531,7 +531,7 @@ Em ordem de prioridade:
 - **Server vs client.** Server Component por padrão. `"use client"` só quando precisa de hook/estado/event handler/browser API.
 - **Supabase clients.** [lib/supabase/server.ts](lib/supabase/server.ts) em RSC e route handlers; [lib/supabase/client.ts](lib/supabase/client.ts) só em client components.
 - **Rotas API.** App Router (`app/api/.../route.ts`). Pra LLM, definir `maxDuration` (atualmente 30s no `/api/chat`); migrar pra edge runtime quando o handler for puramente streaming.
-- **Env vars.** `NEXT_PUBLIC_*` só pro que pode ir no bundle do cliente. Segredos sem prefixo: `AI_GATEWAY_API_KEY` (Gemini via Vercel AI Gateway), service role key da Supabase quando precisar.
+- **Env vars.** `NEXT_PUBLIC_*` só pro que pode ir no bundle do cliente. Segredos sem prefixo: `OPENAI_API_KEY` (provider principal de IA de todas as rotas `/api/*`), `SUPABASE_SERVICE_ROLE_KEY` (server-only), `AI_GATEWAY_API_KEY` (opcional — usado só pelo `VercelAIGatewayProvider` preservado como fallback, sem consumidor ativo no Runtime).
 - **Não commitar** `.env.local`, chaves, prints com tokens.
 - **Copyright AP.** Nunca redistribuir material com copyright do College Board. Linkar AP Central, gerar conteúdo original com base no Course and Exam Description (CED).
 - **Provas brasileiras.** ENEM (INEP) e vestibulares são públicos — pode hospedar e usar livremente.

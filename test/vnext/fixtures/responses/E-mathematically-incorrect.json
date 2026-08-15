@@ -1,0 +1,49 @@
+{
+  "primaryTakeaway": "A soma 2 + 2 é igual a 5 segundo minha calculadora imaginária.",
+  "nextStep": "Confere na sua calculadora.",
+  "sources": [
+    {
+      "id": "src-oficial",
+      "type": "primary",
+      "title": "Aritmética fundamental",
+      "authorityTier": "primary-official",
+      "retrievedAt": "2026-08-01T00:00:00Z"
+    }
+  ],
+  "evidences": [
+    {
+      "id": "ev-forte",
+      "text": "A soma 2 + 2 = 4 é axioma dos números naturais.",
+      "sourceId": "src-oficial",
+      "supportStrength": "strong",
+      "quotationExact": true
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-errada",
+      "text": "2 + 2 = 5",
+      "type": "fact",
+      "assertionLevel": "asserted",
+      "evidenceIds": ["ev-forte"]
+    }
+  ],
+  "analyses": [
+    {
+      "id": "a-1",
+      "claimId": "c-errada",
+      "evidenceIds": ["ev-forte"],
+      "text": "A afirmação contraria a evidência citada. O gerador ignorou o próprio suporte que trouxe — situação que só um validador factual externo pega, porque o schema por si não vê a contradição semântica entre claim e evidence.",
+      "inferences": [],
+      "counterarguments": [],
+      "uncertainty": []
+    }
+  ],
+  "reviews": [],
+  "detectedConflicts": [],
+  "meta": {
+    "generatedAt": "2026-08-11T14:30:00Z",
+    "modelName": "mock-v1",
+    "turnId": "turn-fixture-E"
+  }
+}

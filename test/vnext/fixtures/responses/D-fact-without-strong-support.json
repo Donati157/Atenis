@@ -1,0 +1,46 @@
+{
+  "primaryTakeaway": "A Revolução Industrial começou por volta de 1760 na Inglaterra.",
+  "nextStep": "Compara duas fontes sobre a data de início da Revolução Industrial.",
+  "sources": [
+    {
+      "id": "src-blog-fraco",
+      "type": "web",
+      "title": "Anotações de História — Blog Estudo XYZ",
+      "authorityTier": "web-recognized",
+      "retrievedAt": "2026-08-01T00:00:00Z"
+    }
+  ],
+  "evidences": [
+    {
+      "id": "ev-fraca-1",
+      "text": "O texto menciona que houve uma revolução em algum momento do século 18.",
+      "sourceId": "src-blog-fraco",
+      "supportStrength": "weak",
+      "quotationExact": false
+    },
+    {
+      "id": "ev-fraca-2",
+      "text": "Autor comenta en passant que a Inglaterra teve papel relevante.",
+      "sourceId": "src-blog-fraco",
+      "supportStrength": "weak",
+      "quotationExact": false
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-fato",
+      "text": "A Revolução Industrial começou em 1760 na Inglaterra.",
+      "type": "fact",
+      "assertionLevel": "asserted",
+      "evidenceIds": ["ev-fraca-1", "ev-fraca-2"]
+    }
+  ],
+  "analyses": [],
+  "reviews": [],
+  "detectedConflicts": [],
+  "meta": {
+    "generatedAt": "2026-08-11T14:30:00Z",
+    "modelName": "mock-v1",
+    "turnId": "turn-fixture-D"
+  }
+}

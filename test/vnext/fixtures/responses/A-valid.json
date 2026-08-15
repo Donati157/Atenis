@@ -1,0 +1,85 @@
+{
+  "primaryTakeaway": "Função quadrática é definida por f(x) = ax² + bx + c com a ≠ 0.",
+  "nextStep": "Tenta identificar os coeficientes a, b e c de f(x) = 2x² - 3x + 1.",
+  "sources": [
+    {
+      "id": "src-bncc-em13mat302",
+      "type": "official",
+      "title": "BNCC — Habilidade EM13MAT302",
+      "authorityTier": "primary-official",
+      "url": "http://basenacionalcomum.mec.gov.br/",
+      "retrievedAt": "2026-08-01T00:00:00Z",
+      "gradeSegment": "high",
+      "subject": "matematica"
+    },
+    {
+      "id": "src-pnld-livro-dante",
+      "type": "textbook",
+      "title": "Matemática Contexto & Aplicações vol.1 — Dante (PNLD 2021)",
+      "authorityTier": "textbook",
+      "retrievedAt": "2026-08-01T00:00:00Z",
+      "gradeSegment": "high",
+      "subject": "matematica"
+    }
+  ],
+  "evidences": [
+    {
+      "id": "ev-def-quadratica",
+      "text": "Função quadrática é aquela definida por f(x) = ax² + bx + c com coeficientes reais e a diferente de zero.",
+      "sourceId": "src-pnld-livro-dante",
+      "supportStrength": "strong",
+      "quotationExact": false
+    },
+    {
+      "id": "ev-bncc-competencia",
+      "text": "Resolver e elaborar problemas envolvendo funções quadráticas, reconhecendo o papel dos coeficientes.",
+      "sourceId": "src-bncc-em13mat302",
+      "supportStrength": "moderate",
+      "quotationExact": false
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-def",
+      "text": "Função quadrática é f(x) = ax² + bx + c com a ≠ 0.",
+      "type": "definition",
+      "assertionLevel": "asserted",
+      "evidenceIds": ["ev-def-quadratica"]
+    },
+    {
+      "id": "c-competencia",
+      "text": "O 2º ano do Ensino Médio (BNCC EM13MAT302) espera que o aluno resolva problemas com função quadrática.",
+      "type": "fact",
+      "assertionLevel": "asserted",
+      "evidenceIds": ["ev-bncc-competencia"]
+    }
+  ],
+  "analyses": [
+    {
+      "id": "a-def",
+      "claimId": "c-def",
+      "evidenceIds": ["ev-def-quadratica"],
+      "text": "A condição a ≠ 0 separa quadrática de linear: se a fosse zero, sobraria apenas bx + c, que é reta. Isso importa quando aparece parâmetro literal — checa se o exercício restringe o domínio de a.",
+      "inferences": [
+        "Reconhecer parâmetro a como discriminador entre função quadrática e afim."
+      ],
+      "counterarguments": [],
+      "uncertainty": []
+    }
+  ],
+  "reviews": [
+    {
+      "id": "r1",
+      "claimId": "c-competencia",
+      "verdict": "confirmed",
+      "reviewerType": "critic-rules",
+      "notes": "Habilidade EM13MAT302 confirmada na BNCC."
+    }
+  ],
+  "detectedConflicts": [],
+  "meta": {
+    "generatedAt": "2026-08-11T14:30:00Z",
+    "modelName": "mock-v1",
+    "turnId": "turn-fixture-A"
+  }
+}

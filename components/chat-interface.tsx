@@ -31,9 +31,8 @@ import {
 } from "@/lib/subjects"
 
 // Junta todos os text parts de uma mensagem do modelo, deduplicando.
-// O Gemini, ao usar tool calls (ex: google_search), pode emitir múltiplos
-// text parts e ocasionalmente re-emitir o prefixo (resultado: "Ok, vocêOk, você").
-// Esta função:
+// Modelos com tool calls podem emitir múltiplos text parts e ocasionalmente
+// re-emitir o prefixo (resultado: "Ok, vocêOk, você"). Esta função:
 //   1. Pula text parts consecutivos idênticos.
 //   2. Quando um part é prefixo do próximo (re-emissão pós tool call),
 //      mantém só a versão mais completa.

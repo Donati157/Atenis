@@ -7,7 +7,7 @@ import {
   type UIMessage,
 } from "ai"
 import { z } from "zod"
-import { google } from "@ai-sdk/google"
+import { openai } from "@ai-sdk/openai"
 import {
   SUBJECT_PROMPTS,
   EXAM_PROMPTS,
@@ -617,20 +617,14 @@ export async function POST(req: Request) {
   })
 
   const result = streamText({
-    model: google("gemini-2.5-flash-lite"),
-    // google_search é o tool nativo do Gemini que faz busca no Google —
-    // dá pro Atenis citar fatos atualizados, links e imagens da web.
-    // Nome do tool DEVE ser "google_search" (requisito do provider).
-    // record_mastery alimenta a memória acadêmica (só fora do vanilla
-    // e com aluno logado).
-    tools:
-      isFast || !userId
-        ? { google_search: google.tools.googleSearch({}) }
-        : {
-            google_search: google.tools.googleSearch({}),
-            record_mastery: masteryTool,
-          },
-    // Permite a IA chamar a tool e continuar a resposta no mesmo turno.
+    model: openai("gpt-4o-mini"),
+    // record_mastery alimenta a memória acadêmica (só com aluno logado
+    // e fora do modo vanilla/fast). No modo fast ou sem usuário, nenhum
+    // tool é exposto ao modelo.
+    tools: isFast || !userId ? undefined : { record_mastery: masteryTool },
+    // stopWhen só surte efeito quando há tools disponíveis; deixado
+    // aqui pra manter o comportamento multi-step quando o modelo chama
+    // record_mastery e continua a resposta no mesmo turno.
     stopWhen: stepCountIs(4),
     system: systemParts.join("\n\n"),
     messages: await convertToModelMessages(messages),
