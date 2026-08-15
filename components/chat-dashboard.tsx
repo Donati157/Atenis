@@ -498,6 +498,16 @@ export function ChatDashboard({ user, profile }: ChatDashboardProps) {
               </h3>
               <div className="space-y-1">
                 <Link
+                  href="/dashboard/estudar"
+                  className="w-full text-sm px-3 py-2 rounded-lg transition-colors text-left flex items-center gap-2 hover:bg-primary/10 text-foreground/90 border border-primary/25 bg-primary/5"
+                >
+                  <Compass className="h-4 w-4 text-primary" />
+                  <span className="flex-1">Sessão guiada</span>
+                  <span className="text-[10px] uppercase tracking-wide text-primary/80">
+                    novo
+                  </span>
+                </Link>
+                <Link
                   href="/dashboard/plan"
                   className="w-full text-sm px-3 py-2 rounded-lg transition-colors text-left flex items-center gap-2 hover:bg-secondary/50 text-foreground/80"
                 >
