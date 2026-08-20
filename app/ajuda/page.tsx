@@ -106,6 +106,74 @@ const SECTIONS: FaqSection[] = [
         ),
       },
       {
+        q: "O que é a Sessão Guiada?",
+        a: (
+          <>
+            <p className="mb-2">
+              É um modo novo no dashboard (link <strong>Sessão guiada</strong> na
+              barra lateral) onde o Atenis conduz o estudo em quatro momentos:
+            </p>
+            <ol className="list-decimal pl-5 space-y-1.5">
+              <li>
+                <strong>Descobrir</strong> onde você está — o Atenis te dá uma
+                tarefa curta em vez de perguntar &ldquo;o que você já sabe?&rdquo;.
+              </li>
+              <li>
+                <strong>Explicar</strong> o que faltar — só o suficiente pra você
+                tentar de novo, sem despejar teoria toda de uma vez.
+              </li>
+              <li>
+                <strong>Praticar</strong> — você resolve, ele comenta o seu
+                raciocínio.
+              </li>
+              <li>
+                <strong>Verificar</strong> — uma questão final pra checar se
+                consolidou de verdade.
+              </li>
+            </ol>
+            <p className="mt-2">
+              Hoje a Sessão Guiada cobre <strong>função quadrática</strong>. Vamos
+              adicionar mais tópicos.
+            </p>
+          </>
+        ),
+      },
+      {
+        q: "Como faço uma boa pergunta pro Atenis?",
+        a: (
+          <>
+            <p className="mb-2">
+              Escreve do jeito que você falaria com um amigo que sabe. Não
+              precisa ser formal. Alguns exemplos que funcionam bem:
+            </p>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>&ldquo;Não entendi equação do segundo grau. Explica do começo.&rdquo;</li>
+              <li>&ldquo;Já vi Bhaskara mas travo na hora de calcular Δ.&rdquo;</li>
+              <li>&ldquo;Me faz perguntas pra descobrir onde eu tô errando.&rdquo;</li>
+              <li>&ldquo;Explica de outro jeito, esse não tá fazendo sentido.&rdquo;</li>
+              <li>&ldquo;Quero praticar antes da prova.&rdquo;</li>
+              <li>&ldquo;Quero revisar rápido o que já vimos.&rdquo;</li>
+            </ul>
+            <p className="mt-2">
+              Se o Atenis pediu uma tarefa concreta e você não sabe começar,
+              é só dizer isso — ele adapta. O importante é você tentar em vez
+              de dizer &ldquo;não sei nada&rdquo;.
+            </p>
+          </>
+        ),
+      },
+      {
+        q: "E se eu errar?",
+        a: (
+          <p>
+            Errar é parte do diagnóstico. O Atenis usa o seu erro pra entender
+            onde você travou e escolher a próxima explicação. Não perde ponto,
+            não tem &ldquo;X vermelho&rdquo; — só continua a conversa focando no
+            que faz sentido pra você agora.
+          </p>
+        ),
+      },
+      {
         q: "O que é a BNCC?",
         a: (
           <p>

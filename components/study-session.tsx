@@ -429,9 +429,10 @@ function LoadingBubble() {
 
 function EmptyState({ onQuickStart }: { onQuickStart: (msg: string) => void }) {
   const suggestions = [
-    "Não sei o que é função quadrática — começa do zero comigo",
-    "Já vi, mas travei em Bhaskara",
-    "Quero praticar identificando coeficientes",
+    "Começa do zero — não lembro de nada sobre função quadrática",
+    "Já vi Bhaskara mas travo na hora de calcular Δ",
+    "Quero praticar identificando coeficientes antes de resolver",
+    "Me faz perguntas pra descobrir onde eu tô errando",
   ]
   return (
     <Card className="mt-6 border-border/60 bg-card/40 p-6">

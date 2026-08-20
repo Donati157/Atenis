@@ -117,7 +117,7 @@ export const QUESTION_QUADRATICA_DIAGNOSTIC_01: Question = {
   ...commonBase,
   id: "q-quadratica-diagnostic-01",
   question:
-    "Identifique os coeficientes a, b e c da função f(x) = 3x² - 5x + 2.",
+    "Olha essa função: f(x) = 3x² − 5x + 2. Quais são os valores de a, b e c? Escreve do jeito que fizer sentido pra você.",
   skill: "EM13MAT302",
   difficulty: "easy",
   cognitiveDepth: "understand",
@@ -147,7 +147,7 @@ export const QUESTION_QUADRATICA_DIAGNOSTIC_02: Question = {
   ...commonBase,
   id: "q-quadratica-diagnostic-02",
   question:
-    "A função g(x) = 4x + 1 é uma função quadrática? Justifique brevemente.",
+    "Você diria que g(x) = 4x + 1 é uma função quadrática? Por quê?",
   skill: "EM13MAT302",
   difficulty: "easy",
   cognitiveDepth: "analyze",
@@ -186,7 +186,7 @@ export const QUESTION_QUADRATICA_PRACTICE_01: Question = {
   ...commonBase,
   id: "q-quadratica-practice-01",
   question:
-    "Resolva a equação x² - 5x + 6 = 0 usando a fórmula resolutiva (Bhaskara).",
+    "Ache os valores de x que satisfazem x² − 5x + 6 = 0. Se quiser, usa Bhaskara — mas se preferir tentar de outro jeito, tudo bem também.",
   skill: "EM13MAT302",
   difficulty: "medium",
   cognitiveDepth: "apply",
@@ -218,7 +218,7 @@ export const QUESTION_QUADRATICA_PRACTICE_02: Question = {
   ...commonBase,
   id: "q-quadratica-practice-02",
   question:
-    "A função f(x) = -2x² + 8x - 5 tem concavidade voltada para cima ou para baixo? Justifique.",
+    "A parábola de f(x) = −2x² + 8x − 5 abre pra cima ou pra baixo? Como você chegou nessa conclusão?",
   skill: "EM13MAT302",
   difficulty: "medium",
   cognitiveDepth: "analyze",
@@ -252,7 +252,7 @@ export const QUESTION_QUADRATICA_PRACTICE_03: Question = {
   ...commonBase,
   id: "q-quadratica-practice-03",
   question:
-    "Determine as coordenadas do vértice da parábola dada por f(x) = x² - 4x + 3.",
+    "Ache o vértice da parábola de f(x) = x² − 4x + 3. Manda o x e o y.",
   skill: "EM13MAT302",
   difficulty: "medium",
   cognitiveDepth: "apply",
@@ -289,7 +289,7 @@ export const QUESTION_QUADRATICA_VERIFICATION_01: Question = {
   ...commonBase,
   id: "q-quadratica-verify-01",
   question:
-    "Uma pedra é lançada verticalmente para cima e sua altura h (em metros) após t segundos é dada por h(t) = -5t² + 20t + 1. Qual é a altura máxima atingida?",
+    "Uma pedra é jogada pra cima. A altura dela (em metros) depois de t segundos é h(t) = −5t² + 20t + 1. Qual é a altura máxima que ela atinge? (Não esqueça a unidade na resposta.)",
   skill: "EM13MAT302",
   difficulty: "hard",
   cognitiveDepth: "evaluate",
